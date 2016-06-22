@@ -1,0 +1,14 @@
+{
+  "request.userAgent": "Mozilla/5.0 (compatible; SpigetFetcher-v2; +https://spiget.org/fetcher)",
+  "request.cookieFile": "cookies.json",
+  "database.timeout": 3000,
+  "database.host": "localhost",
+  "database.port": 27017,
+  "database.name": "spiget",
+  "database.user": "spiget",
+  "database.pass": "spiget",
+  "database.db": "admin",
+  "fetch.mode": "FULL",
+  "fetch.resources.pages": 20,
+  "fetch.resources.inverted": true
+}
