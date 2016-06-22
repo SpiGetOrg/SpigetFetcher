@@ -102,7 +102,7 @@ public class SpigetFetcher {
 		int pageAmount = config.get("fetch.resources.pages").getAsInt();
 		databaseClient.updateStatus("fetch.page.amount", pageAmount);
 		int pageCounter = 0;
-		Paginator resourceListPaginator = new Paginator(SpigetClient.BASE_URL + "/resources/?page=%s", pageAmount, config.get("fetch.resources.inverted").getAsBoolean());
+		Paginator resourceListPaginator = new Paginator(SpigetClient.BASE_URL + "resources/?page=%s", pageAmount, config.get("fetch.resources.inverted").getAsBoolean());
 		for (org.jsoup.nodes.Document document : resourceListPaginator) {
 			pageCounter++;
 			log.info("Fetching page " + pageCounter + "/" + pageAmount);
@@ -119,7 +119,7 @@ public class SpigetFetcher {
 					ListedResource listedResource = resourceItemParser.parse(resourceListItem);
 					if (mode.isFullResource()) {
 						try {
-							Document resourceDocument = SpigetClient.get(SpigetClient.BASE_URL + "/resources/" + listedResource.getId()).getDocument();
+							Document resourceDocument = SpigetClient.get(SpigetClient.BASE_URL + "resources/" + listedResource.getId()).getDocument();
 							listedResource = resourcePageParser.parse(resourceDocument, listedResource);
 						} catch (Throwable throwable) {
 							log.error("Unexpected exception while parsing full resource #" + listedResource.getId(), throwable);
