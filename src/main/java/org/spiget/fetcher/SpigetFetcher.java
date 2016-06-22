@@ -10,6 +10,7 @@ import org.spiget.data.resource.ListedResource;
 import org.spiget.database.DatabaseClient;
 import org.spiget.fetcher.parser.Paginator;
 import org.spiget.fetcher.parser.ResourceListItemParser;
+import org.spiget.fetcher.parser.ResourcePageParser;
 import org.spiget.fetcher.request.SpigetClient;
 import org.spiget.fetcher.request.SpigetResponse;
 
@@ -101,6 +102,7 @@ public class SpigetFetcher {
 			log.info("Fetching page " + pageCounter + "/" + pageAmount);
 
 			ResourceListItemParser resourceItemParser = new ResourceListItemParser();
+			ResourcePageParser resourcePageParser = new ResourcePageParser();
 			Elements resourceListItems = document.select("li.resourceListItem");
 			int itemCounter = 0;
 			for (Element resourceListItem : resourceListItems) {
@@ -110,7 +112,7 @@ public class SpigetFetcher {
 					if (mode.isFullResource()) {
 						try {
 							Document resourceDocument = SpigetClient.get(SpigetClient.BASE_URL + "/resources/" + listedResource.getId()).getDocument();
-
+							listedResource = resourcePageParser.parse(resourceDocument, listedResource);
 						} catch (Throwable throwable) {
 							log.error("Unexpected exception while parsing full resource #" + listedResource.getId(), throwable);
 						}
