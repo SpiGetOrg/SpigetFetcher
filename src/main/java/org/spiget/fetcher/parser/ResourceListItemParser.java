@@ -77,10 +77,14 @@ public class ResourceListItemParser {
 
 				String iconSource = resourceIconImage.attr("src");
 				String iconData = "";
-				try {
-					iconData = iconToBase64(iconSource);
-				} catch (IOException | InterruptedException e) {
-					log.warn("Failed to download icon data for #" + listedResource.getId(), e);
+				if (iconSource.contains("static.spigotmc.org")) {
+					iconSource = "";
+				} else {
+					try {
+						iconData = iconToBase64(iconSource);
+					} catch (IOException | InterruptedException e) {
+						log.warn("Failed to download icon data for #" + listedResource.getId(), e);
+					}
 				}
 				listedResource.setIcon(new SpigetIcon(iconSource, iconData));
 			}
@@ -90,10 +94,14 @@ public class ResourceListItemParser {
 
 				String avatarSource = resourceAvatarImage.attr("src");
 				String avatarData = "";
-				try {
-					avatarData = iconToBase64(avatarSource);
-				} catch (IOException | InterruptedException e) {
-					log.warn("Failed to download avatar for #" + listedResource.getId(), e);
+				if (avatarSource.contains("static.spigotmc.org")) {
+					avatarSource = "";
+				} else {
+					try {
+						avatarData = iconToBase64(avatarSource);
+					} catch (IOException | InterruptedException e) {
+						log.warn("Failed to download avatar for #" + listedResource.getId(), e);
+					}
 				}
 				listedResource.getAuthor().setIcon(new SpigetIcon(avatarSource, avatarData));
 			}
