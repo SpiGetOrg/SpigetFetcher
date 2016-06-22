@@ -94,13 +94,18 @@ public class SpigetFetcher {
 
 	public void fetch() {
 		log.info("----- Fetcher started -----");
+		long start = System.currentTimeMillis();
+		databaseClient.updateStatus("fetch.start", start);
+		databaseClient.updateStatus("fetch.end", 0);
 
 		int pageAmount = config.get("fetch.resources.pages").getAsInt();
+		databaseClient.updateStatus("fetch.page.amount", pageAmount);
 		int pageCounter = 0;
 		Paginator resourceListPaginator = new Paginator(SpigetClient.BASE_URL + "/resources/?page=%s", pageAmount, config.get("fetch.resources.inverted").getAsBoolean());
 		for (org.jsoup.nodes.Document document : resourceListPaginator) {
 			pageCounter++;
 			log.info("Fetching page " + pageCounter + "/" + pageAmount);
+			databaseClient.updateStatus("fetch.page.index", pageCounter);
 
 			ResourceListItemParser resourceItemParser = new ResourceListItemParser();
 			ResourcePageParser resourcePageParser = new ResourcePageParser();
@@ -108,6 +113,7 @@ public class SpigetFetcher {
 			int itemCounter = 0;
 			for (Element resourceListItem : resourceListItems) {
 				itemCounter++;
+				databaseClient.updateStatus("fetch.page.item.index", itemCounter);
 				try {
 					ListedResource listedResource = resourceItemParser.parse(resourceListItem);
 					if (mode.isFullResource()) {
@@ -141,6 +147,9 @@ public class SpigetFetcher {
 				}
 			}
 		}
+
+		long end = System.currentTimeMillis();
+		databaseClient.updateStatus("fetch.end", end);
 	}
 
 }
