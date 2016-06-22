@@ -10,6 +10,7 @@ import java.io.IOException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Base64;
+import java.util.TimeZone;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -64,6 +65,17 @@ public class ParserUtil {
 	 */
 	public static String stringToInt(String original) {
 		return original.replace(",", "").replace(".", "");
+	}
+
+	public static long parseTimeOrTitle(Element element) {
+		if (element.hasAttr("data-time")) {
+			return Long.parseLong(element.attr("data-time"));
+		} else if (element.hasAttr("title")) {
+			return parseDateTimeToLong(element.attr("title") + " " + TimeZone.getDefault().getDisplayName());
+		} else {
+			log.warn("No data-time or title attribute found");
+			return 0;
+		}
 	}
 
 }
