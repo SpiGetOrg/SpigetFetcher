@@ -6,6 +6,7 @@ import org.spiget.data.resource.ListedResource;
 import org.spiget.data.resource.Resource;
 
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.List;
 
 public class ResourcePageParser {
@@ -43,7 +44,7 @@ public class ResourcePageParser {
 					customResourceFields.remove();// Remove so we only have the actual description left
 				}
 
-				resource.setDescription(descriptionText.html());
+				resource.setDescription(Base64.getEncoder().encodeToString(descriptionText.html().getBytes()));
 			}
 		}
 
