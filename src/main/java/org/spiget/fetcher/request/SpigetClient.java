@@ -18,7 +18,7 @@ import java.util.Map;
 public abstract class SpigetClient {
 
 	public static final String BASE_URL  = "https://spigotmc.org/";
-	public static final String userAgent = "SpigetFetcher v2"/*SpigetFetcher.config.get("request.userAgent").getAsString()*/;
+	public static final String userAgent = SpigetFetcher.config.get("request.userAgent").getAsString();
 
 	public static boolean             bypassCloudflare = true;
 	public static Map<String, String> cookies          = new HashMap<>();
