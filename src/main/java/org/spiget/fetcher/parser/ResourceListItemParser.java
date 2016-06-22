@@ -8,6 +8,7 @@ import org.spiget.data.resource.ListedResource;
 import org.spiget.data.resource.ResourceRating;
 import org.spiget.data.resource.SpigetIcon;
 import org.spiget.data.resource.version.ListedResourceVersion;
+import org.spiget.fetcher.SpigetFetcher;
 
 import java.io.IOException;
 
@@ -19,6 +20,8 @@ import static org.spiget.fetcher.parser.ParserUtil.*;
 @Log4j2
 public class ResourceListItemParser {
 
+	static boolean debug = SpigetFetcher.config.has("debug.parse.resource.items") && SpigetFetcher.config.get("debug.parse.resource.items").getAsBoolean();
+
 	/**
 	 * Parses a resource item.
 	 *
@@ -26,6 +29,10 @@ public class ResourceListItemParser {
 	 * @return the parsed item
 	 */
 	public ListedResource parse(Element resourceItem) {
+		if (debug) {
+			log.debug(resourceItem);
+		}
+
 		ListedResource listedResource = new ListedResource(Integer.parseInt(resourceItem.id().replace("resource-", "")));// <li class="resourceListItem visible " id="resource-12345">
 
 		{

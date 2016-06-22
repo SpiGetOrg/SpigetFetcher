@@ -4,12 +4,15 @@ import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.spiget.data.resource.ListedResource;
 import org.spiget.data.resource.Resource;
+import org.spiget.fetcher.SpigetFetcher;
 
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
 
 public class ResourcePageParser {
+
+	static boolean debug = SpigetFetcher.config.has("debug.parse.resource.page") && SpigetFetcher.config.get("debug.parse.resource.page").getAsBoolean();
 
 	public Resource parse(Document document, ListedResource base) {
 		Resource resource = new Resource(base);

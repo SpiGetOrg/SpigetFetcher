@@ -11,5 +11,7 @@
   "fetch.mode": "FULL",
   "fetch.resources.pages": 20,
   "fetch.resources.inverted": true,
-  "debug.connections": false
+  "debug.connections": false,
+  "debug.parse.resource.items": false,
+  "debug.parse.resource.page": false
 }
