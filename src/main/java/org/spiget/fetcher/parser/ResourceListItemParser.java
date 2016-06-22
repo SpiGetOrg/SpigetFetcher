@@ -11,6 +11,7 @@ import org.spiget.data.resource.version.ListedResourceVersion;
 import org.spiget.fetcher.SpigetFetcher;
 
 import java.io.IOException;
+import java.util.TimeZone;
 
 import static org.spiget.fetcher.parser.ParserUtil.*;
 
@@ -52,7 +53,15 @@ public class ResourceListItemParser {
 			}
 			{
 				Element resourceReleaseDate = abbrOrSpan(resourceDetails, ".DateTime");// <span class="DateTime" title="May 27, 2016 at 5:20 PM">May 27, 2016</span>
-				listedResource.setReleaseDate(Long.parseLong(resourceReleaseDate.attr("data-time")));
+				long releaseDate = 0;
+				if (resourceReleaseDate.hasAttr("data-time")) {
+					releaseDate = Long.parseLong(resourceReleaseDate.attr("data-time"));
+				} else if (resourceReleaseDate.hasAttr("title")) {
+					releaseDate = parseDateTimeToLong(resourceReleaseDate.attr("title") + " " + TimeZone.getDefault().getDisplayName());
+				} else {
+					log.warn("No data-time or title attribute found for resource #" + listedResource.getId());
+				}
+				listedResource.setReleaseDate(releaseDate);
 			}
 			{
 				Element resourceCategory = null;
