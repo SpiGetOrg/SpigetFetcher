@@ -97,7 +97,7 @@ public class SpigetFetcher {
 
 		int pageAmount = config.get("fetch.resources.pages").getAsInt();
 		int pageCounter = 0;
-		Paginator resourceListPaginator = new Paginator(SpigetClient.BASE_URL + "/resources/?page=%s", pageAmount, config.get("fetch.resouces.inverted").getAsBoolean());
+		Paginator resourceListPaginator = new Paginator(SpigetClient.BASE_URL + "/resources/?page=%s", pageAmount, config.get("fetch.resources.inverted").getAsBoolean());
 		for (org.jsoup.nodes.Document document : resourceListPaginator) {
 			pageCounter++;
 			log.info("Fetching page " + pageCounter + "/" + pageAmount);
