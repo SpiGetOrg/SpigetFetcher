@@ -5,29 +5,20 @@ public enum FetchMode {
 	/**
 	 * Loads all resources from the specified amount of list-pages, loads the data from the source page and loads data from the author page
 	 */
-	FULL(true, true),
+	FULL(true),
 	/**
 	 * Only loads resources from the specified amount of list-pages, without getting the full data for resources or authors
 	 */
-	LIST(false, false),
-	/**
-	 * Loads resources from the specified amount of list-pages, loads data from the resource but doesn't load full author data
-	 */
-	NO_AUTHOR(true, false);
+	LIST(false);
 
 	private boolean fullResource;
-	private boolean fullAuthor;
 
-	FetchMode(boolean fullResource, boolean fullAuthor) {
+	FetchMode(boolean fullResource) {
 		this.fullResource = fullResource;
-		this.fullAuthor = fullAuthor;
 	}
 
 	public boolean isFullResource() {
 		return fullResource;
 	}
 
-	public boolean isFullAuthor() {
-		return fullAuthor;
-	}
 }
