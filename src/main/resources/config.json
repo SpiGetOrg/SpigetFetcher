@@ -10,5 +10,6 @@
   "database.db": "admin",
   "fetch.mode": "FULL",
   "fetch.resources.pages": 20,
-  "fetch.resources.inverted": true
+  "fetch.resources.inverted": true,
+  "debug.connections": false
 }

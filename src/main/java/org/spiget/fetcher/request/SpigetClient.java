@@ -24,6 +24,9 @@ public abstract class SpigetClient {
 	public static Map<String, String> cookies          = new HashMap<>();
 
 	public static SpigetResponse get(String url) throws IOException, InterruptedException {
+		if (SpigetFetcher.config.get("debug.connections").getAsBoolean()) {
+			log.debug("GET " + url);
+		}
 		if (bypassCloudflare) {
 			return HtmlUnitClient.get(url);
 		} else {
@@ -32,6 +35,9 @@ public abstract class SpigetClient {
 	}
 
 	public static SpigetDownload download(String url) throws IOException, InterruptedException {
+		if (SpigetFetcher.config.get("debug.connections").getAsBoolean()) {
+			log.debug("DOWNLOAD " + url);
+		}
 		return HtmlUnitClient.download(url);
 	}
 
