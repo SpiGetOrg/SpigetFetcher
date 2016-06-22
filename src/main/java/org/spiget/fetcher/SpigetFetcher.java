@@ -121,15 +121,19 @@ public class SpigetFetcher {
 
 					ListedResource databaseResource = databaseClient.getResource(listedResource.getId());
 					if (databaseResource != null) {
+						log.info("Updating existing resource #" + listedResource.getId());
 						databaseClient.updateResource(listedResource);
 					} else {
+						log.info("Inserting new resource #" + listedResource.getId());
 						databaseClient.insertResource(listedResource);
 					}
 
 					ListedAuthor databaseAuthor = databaseClient.getAuthor(listedResource.getAuthor().getId());
 					if (databaseAuthor != null) {
+						log.info("Updating existing author #" + listedResource.getAuthor().getId());
 						databaseClient.updateAuthor(listedResource.getAuthor());
 					} else {
+						log.info("Inserting new author #" + listedResource.getAuthor().getId());
 						databaseClient.insertAuthor(listedResource.getAuthor());
 					}
 				} catch (Throwable throwable) {
