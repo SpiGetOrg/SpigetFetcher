@@ -59,7 +59,7 @@ public class ResourceListItemParser {
 				} else if (resourceReleaseDate.hasAttr("title")) {
 					releaseDate = parseDateTimeToLong(resourceReleaseDate.attr("title") + " " + TimeZone.getDefault().getDisplayName());
 				} else {
-					log.warn("No data-time or title attribute found for resource #" + listedResource.getId());
+					log.warn("No data-time or title attribute found for resourceRelease on resource #" + listedResource.getId());
 				}
 				listedResource.setReleaseDate(releaseDate);
 			}
@@ -137,8 +137,15 @@ public class ResourceListItemParser {
 				listedResource.setDownloads(Integer.parseInt(stringToInt(resourceDownloadNumber.text())));
 			}
 			{
-				Element resourceUpdated = abbrOrSpan(resourceStats, ".DateTime");
-				long updateDate = Long.parseLong(resourceUpdated.attr("data-time"));// <abbr class="DateTime" data-time="1466598083" data-diff="12" data-datestring="Jun 22, 2016" data-timestring="2:21 PM" title="Jun 22, 2016 at 2:21 PM">3 minutes ago</abbr>
+				Element resourceUpdated = abbrOrSpan(resourceStats, ".DateTime");// <abbr class="DateTime" data-time="1466598083" data-diff="12" data-datestring="Jun 22, 2016" data-timestring="2:21 PM" title="Jun 22, 2016 at 2:21 PM">3 minutes ago</abbr>
+				long updateDate = 0;
+				if (resourceUpdated.hasAttr("data-time")) {
+					updateDate = Long.parseLong(resourceUpdated.attr("data-time"));
+				} else if (resourceUpdated.hasAttr("title")) {
+					updateDate = parseDateTimeToLong(resourceUpdated.attr("title") + " " + TimeZone.getDefault().getDisplayName());
+				} else {
+					log.warn("No data-time or title attribute found for resourceUpdated on resource #" + listedResource.getId());
+				}
 				listedResource.setUpdateDate(updateDate);
 				listedResource.getVersion().setReleaseDate(updateDate);// Update the date for the previously set version
 			}
