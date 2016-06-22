@@ -62,7 +62,7 @@ public class Paginator implements Iterable<Document> {
 
 		@Override
 		public Document next() {
-			return getPage(currentPage++);
+			return getPage(inverted ? currentPage-- : currentPage++);
 		}
 	}
 
