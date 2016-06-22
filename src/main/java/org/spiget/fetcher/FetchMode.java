@@ -11,14 +11,14 @@ public enum FetchMode {
 	 */
 	LIST(false);
 
-	private boolean fullResource;
+	private boolean updateResource;
 
-	FetchMode(boolean fullResource) {
-		this.fullResource = fullResource;
+	FetchMode(boolean updateResource) {
+		this.updateResource = updateResource;
 	}
 
-	public boolean isFullResource() {
-		return fullResource;
+	public boolean isUpdateResource() {
+		return updateResource;
 	}
 
 }

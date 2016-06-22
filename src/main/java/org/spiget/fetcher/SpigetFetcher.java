@@ -117,7 +117,7 @@ public class SpigetFetcher {
 				databaseClient.updateStatus("fetch.page.item.index", itemCounter);
 				try {
 					ListedResource listedResource = resourceItemParser.parse(resourceListItem);
-					if (mode.isFullResource()) {
+					if (mode.isUpdateResource()) {
 						try {
 							Document resourceDocument = SpigetClient.get(SpigetClient.BASE_URL + "resources/" + listedResource.getId()).getDocument();
 							listedResource = resourcePageParser.parse(resourceDocument, listedResource);
