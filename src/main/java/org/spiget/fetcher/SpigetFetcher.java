@@ -6,6 +6,7 @@ import lombok.extern.log4j.Log4j2;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
+import org.spiget.data.author.ListedAuthor;
 import org.spiget.data.resource.ListedResource;
 import org.spiget.database.DatabaseClient;
 import org.spiget.fetcher.parser.Paginator;
@@ -116,6 +117,20 @@ public class SpigetFetcher {
 						} catch (Throwable throwable) {
 							log.error("Unexpected exception while parsing full resource #" + listedResource.getId(), throwable);
 						}
+					}
+
+					ListedResource databaseResource = databaseClient.getResource(listedResource.getId());
+					if (databaseResource != null) {
+						databaseClient.updateResource(listedResource);
+					} else {
+						databaseClient.insertResource(listedResource);
+					}
+
+					ListedAuthor databaseAuthor = databaseClient.getAuthor(listedResource.getAuthor().getId());
+					if (databaseAuthor != null) {
+						databaseClient.updateAuthor(listedResource.getAuthor());
+					} else {
+						databaseClient.insertAuthor(listedResource.getAuthor());
 					}
 				} catch (Throwable throwable) {
 					log.error("Unexpected exception while parsing item #" + itemCounter + " on page " + pageCounter, throwable);
