@@ -159,6 +159,12 @@ public class SpigetFetcher {
 								int maxPage = Math.min(pageCount, config.get("fetch.resources.updates.maxPage").getAsInt());
 								Paginator resourceUpdatesPaginator = new Paginator(SpigetClient.BASE_URL + "resources/" + listedResource.getId() + "/updates?page=%s", maxPage, false);
 								for (Document updateDocument : resourceUpdatesPaginator) {
+									Element resourceUpdatesTab = updateDocument.select("li.resourceTabUpdates").first();
+									if (resourceUpdatesTab == null || !resourceUpdatesTab.hasClass("active")) {
+										// We're not on the updates page, which probably means the resource hasn't been updated yet.
+										break;
+									}
+
 									Elements resourceUpdateElements = updateDocument.select("li.resourceUpdate");
 									for (Element resourceUpdateElement : resourceUpdateElements) {
 										ResourceUpdate resourceUpdate = resourceUpdateItemParer.parse(resourceUpdateElement);
