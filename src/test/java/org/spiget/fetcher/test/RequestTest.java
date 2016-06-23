@@ -28,7 +28,7 @@ public class RequestTest {
 	public void resourceRequestParseTest() throws IOException, InterruptedException {
 		ListedResource base = new ListedResource(21779, "SaturationPreview");//Would be provided by the resource list fetcher
 		base.setCategory(new ListedCategory(22, "Mechanics"));
-		base.setVersion(new ListedResourceVersion("1.2.1"));
+		base.setVersion(new ListedResourceVersion(0, "1.2.1"));
 		base.setAuthor(new ListedAuthor(6643, "inventivetalent"));
 
 		org.jsoup.nodes.Document document = SpigetClient.get("https://www.spigotmc.org/resources/saturationpreview.21779/").getDocument();
