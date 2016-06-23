@@ -27,6 +27,9 @@ public abstract class SpigetClient {
 		if (SpigetFetcher.config.get("debug.connections").getAsBoolean()) {
 			log.debug("GET " + url);
 		}
+		if (SpigetFetcher.config.has("request.delay")) {
+			Thread.sleep(SpigetFetcher.config.get("request.delay").getAsInt());
+		}
 		if (bypassCloudflare) {
 			return HtmlUnitClient.get(url);
 		} else {
@@ -53,7 +56,7 @@ public abstract class SpigetClient {
 		for (Map.Entry<String, String> entry : cookies.entrySet()) {
 			cookieJson.addProperty(entry.getKey(), entry.getValue());
 		}
-		try (Writer writer = new FileWriter(SpigetFetcher.config.get("request.cookieFile").getAsString())){
+		try (Writer writer = new FileWriter(SpigetFetcher.config.get("request.cookieFile").getAsString())) {
 			new Gson().toJson(cookieJson, writer);
 		}
 	}
