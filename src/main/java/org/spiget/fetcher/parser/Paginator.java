@@ -28,7 +28,7 @@ public class Paginator implements Iterable<Document> {
 		if (this.inverted) {
 			this.currentPage = this.maxPage;
 		} else {
-			this.currentPage = 0;
+			this.currentPage = 1;
 		}
 	}
 
