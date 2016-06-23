@@ -55,9 +55,9 @@ public class Paginator implements Iterable<Document> {
 		@Override
 		public boolean hasNext() {
 			if (inverted) {
-				return currentPage > 0;
+				return currentPage >= 1;
 			} else {
-				return currentPage < maxPage;
+				return currentPage <= maxPage;
 			}
 		}
 
