@@ -68,6 +68,7 @@ public class Paginator implements Iterable<Document> {
 	}
 
 	public static int parseNavPageCount(Element pageNav) {
+		if (pageNav == null) { return 1; }
 		return Integer.parseInt(pageNav.attr("data-last"));
 	}
 
