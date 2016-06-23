@@ -21,9 +21,15 @@ public class ResourceVersionItemParser {
 		Element rating = versionItem.select("td.rating").first();
 		Element download = versionItem.select("td.download").first();// <td class="dataOptions download"><a href="resources/example.12345/download?version=1234" class="secondaryContent">Download</a></td>
 
-		ResourceVersion resourceVersion = new ResourceVersion(version.text());
-		resourceVersion.setDownloads(Integer.parseInt(stringToInt(downloads.text())));
+		ResourceVersion resourceVersion;
+		{
+			Element downloadLink = download.select("a").first();
+			String href = downloadLink.attr("href");
+			resourceVersion = new ResourceVersion(Integer.parseInt(extractIdFromUrl(href, PARAM_URL_ID)), version.text());
+			resourceVersion.setUrl(href);
 
+			resourceVersion.setDownloads(Integer.parseInt(stringToInt(downloads.text())));
+		}
 		{
 			Element releaseDateTime = abbrOrSpan(releaseDate, ".DateTime");
 			resourceVersion.setReleaseDate(parseTimeOrTitle(releaseDateTime));
@@ -32,10 +38,6 @@ public class ResourceVersionItemParser {
 			Element ratings = rating.select("span.ratings").first();// <span class="ratings" title="3.00">
 			Element ratingsHint = rating.select("span.Hint").first();// <span class="Hint">1 rating</span>
 			resourceVersion.setRating(new Rating(Integer.parseInt(ratingsHint.text().split(" ")[0]), Float.parseFloat(ratings.attr("title"))));
-		}
-		{
-			Element downloadLink = download.select("a").first();
-			resourceVersion.setUrl(downloadLink.attr("href"));
 		}
 
 		return resourceVersion;

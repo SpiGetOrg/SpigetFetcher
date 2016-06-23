@@ -65,7 +65,7 @@ public class ParseTest {
 
 		ListedResource base = new ListedResource(21714, "InventoryScroll");//Would be provided by the resource list fetcher
 		base.setCategory(new ListedCategory(22, "Mechanics"));
-		base.setVersion(new ListedResourceVersion("1.1.0"));
+		base.setVersion(new ListedResourceVersion(0, "1.1.0"));
 		base.setAuthor(new ListedAuthor(6643, "inventivetalent"));
 
 		Resource parsed = new ResourcePageParser().parse(document, base);

@@ -41,14 +41,14 @@ public class ResourceListItemParser {
 			Element resourceVersion = resourceTitle.select("span.version").first();// <span class="version">1.2.3</span>
 
 			listedResource.setName(resourceLink.text());
-			listedResource.setVersion(new ListedResourceVersion(resourceVersion.text(), 0L));// set the date to 0 here, will be updated when parsing the update date
+			listedResource.setVersion(new ListedResourceVersion(0, resourceVersion.text(), 0L));// set the date to 0 here, will be updated when parsing the update date
 		}
 
 		{
 			Element resourceDetails = resourceItem.select("div.resourceDetails").first();
 			{
 				Element resourceAuthor = resourceDetails.select("a.username").first();// <a href="members/example.1234/" class="username" dir="auto">Example</a>
-				listedResource.setAuthor(new ListedAuthor(Integer.parseInt(extractIdFromUrl(resourceAuthor.attr("href"))), resourceAuthor.text(), null));
+				listedResource.setAuthor(new ListedAuthor(Integer.parseInt(extractIdFromUrl(resourceAuthor.attr("href"), DOT_URL_ID)), resourceAuthor.text(), null));
 			}
 			{
 				Element resourceReleaseDate = abbrOrSpan(resourceDetails, ".DateTime");// <span class="DateTime" title="May 27, 2016 at 5:20 PM">May 27, 2016</span>
@@ -63,7 +63,7 @@ public class ResourceListItemParser {
 					}
 				}
 				if (resourceCategory != null) {// <a href="resources/categories/misc.16/">Misc</a>
-					listedResource.setCategory(new ListedCategory(Integer.parseInt(extractIdFromUrl(resourceCategory.attr("href"))), resourceCategory.text()));
+					listedResource.setCategory(new ListedCategory(Integer.parseInt(extractIdFromUrl(resourceCategory.attr("href"), DOT_URL_ID)), resourceCategory.text()));
 				}
 			}
 		}

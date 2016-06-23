@@ -131,26 +131,28 @@ public class SpigetFetcher {
 						if (mode.isUpdateResourceVersions()) {
 							ResourceVersionItemParser resourceVersionItemParser = new ResourceVersionItemParser();
 							try {
-								Document versionDocument = SpigetClient.get(SpigetClient.BASE_URL + "resources/" + listedResource.getId()+"/history").getDocument();
+								Document versionDocument = SpigetClient.get(SpigetClient.BASE_URL + "resources/" + listedResource.getId() + "/history").getDocument();
 								Element resourceHistory = versionDocument.select("table.resourceHistory").first();
 								Elements versionElements = resourceHistory.select("tr.dataRow");
-								boolean first=true;
+								boolean first = true;
 								for (Element versionElement : versionElements) {
 									if (first) {
 										// The first row is the table header
-										first=false;
+										first = false;
 										continue;
 									}
 
-									ResourceVersion resourceVersion=resourceVersionItemParser.parse(versionElement);
+									ResourceVersion resourceVersion = resourceVersionItemParser.parse(versionElement);
 									((Resource) listedResource).getVersions().add(resourceVersion);
+
+									databaseClient.updateOrInsertVersion(listedResource, resourceVersion);
 								}
+								listedResource.setVersion(((Resource) listedResource).getVersions().get(0));
 							} catch (Throwable throwable) {
 								log.error("Unexpected exception while parsing resource versions for #" + listedResource.getId(), throwable);
 							}
 						}
 					}
-
 
 					ListedResource databaseResource = databaseClient.getResource(listedResource.getId());
 					if (databaseResource != null) {

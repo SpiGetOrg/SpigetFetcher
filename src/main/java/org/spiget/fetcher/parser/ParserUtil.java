@@ -17,11 +17,13 @@ import java.util.regex.Pattern;
 @Log4j2
 public class ParserUtil {
 
-	static final Pattern          URL_ID_PATTERN   = Pattern.compile("\\.(.*?)/");
+	static final Pattern DOT_URL_ID   = Pattern.compile("\\.(.*?)/");
+	static final Pattern PARAM_URL_ID = Pattern.compile("\\?.+=([0-9]+)");
+
 	static final SimpleDateFormat DATE_TIME_FORMAT = new SimpleDateFormat("MMM d, yyyy 'at' h:mm a");
 
-	public static String extractIdFromUrl(String url) {
-		Matcher matcher = URL_ID_PATTERN.matcher(url);
+	public static String extractIdFromUrl(String url, Pattern pattern) {
+		Matcher matcher = pattern.matcher(url);
 		while (matcher.find()) {
 			return matcher.group(1);
 		}
