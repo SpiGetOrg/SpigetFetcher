@@ -1,12 +1,10 @@
 package org.spiget.fetcher.parser;
 
 import org.jsoup.nodes.Element;
-import org.spiget.data.resource.ResourceRating;
+import org.spiget.data.resource.Rating;
 import org.spiget.data.resource.version.ResourceVersion;
 
-import static org.spiget.fetcher.parser.ParserUtil.abbrOrSpan;
-import static org.spiget.fetcher.parser.ParserUtil.parseTimeOrTitle;
-import static org.spiget.fetcher.parser.ParserUtil.stringToInt;
+import static org.spiget.fetcher.parser.ParserUtil.*;
 
 public class ResourceVersionItemParser {
 
@@ -33,7 +31,7 @@ public class ResourceVersionItemParser {
 		{
 			Element ratings = rating.select("span.ratings").first();// <span class="ratings" title="3.00">
 			Element ratingsHint = rating.select("span.Hint").first();// <span class="Hint">1 rating</span>
-			resourceVersion.setResourceRating(new ResourceRating(Integer.parseInt(ratingsHint.text().split(" ")[0]), Float.parseFloat(ratings.attr("title"))));
+			resourceVersion.setRating(new Rating(Integer.parseInt(ratingsHint.text().split(" ")[0]), Float.parseFloat(ratings.attr("title"))));
 		}
 		{
 			Element downloadLink = download.select("a").first();

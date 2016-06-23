@@ -5,7 +5,7 @@ import org.jsoup.nodes.Element;
 import org.spiget.data.author.ListedAuthor;
 import org.spiget.data.category.ListedCategory;
 import org.spiget.data.resource.ListedResource;
-import org.spiget.data.resource.ResourceRating;
+import org.spiget.data.resource.Rating;
 import org.spiget.data.resource.SpigetIcon;
 import org.spiget.data.resource.version.ListedResourceVersion;
 import org.spiget.fetcher.SpigetFetcher;
@@ -119,7 +119,7 @@ public class ResourceListItemParser {
 				{
 					Element resourceRatings = resourceRatingContainer.select("span.ratings").first();// <span class="ratings" title="4.90">
 					Element resourceRatingsHint = resourceRatingContainer.select("span.Hint").first();// <span class="Hint">10 ratings</span>
-					listedResource.setResourceRating(new ResourceRating(Integer.parseInt(stringToInt(resourceRatingsHint.text().split(" ")[0])), Float.parseFloat(resourceRatings.attr("title"))));
+					listedResource.setRating(new Rating(Integer.parseInt(stringToInt(resourceRatingsHint.text().split(" ")[0])), Float.parseFloat(resourceRatings.attr("title"))));
 				}
 			}
 			{
