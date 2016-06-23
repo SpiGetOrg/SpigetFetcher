@@ -4,6 +4,7 @@ import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.spiget.data.resource.ListedResource;
 import org.spiget.data.resource.Resource;
+import org.spiget.data.resource.ResourceFile;
 import org.spiget.fetcher.SpigetFetcher;
 
 import java.util.ArrayList;
@@ -48,6 +49,18 @@ public class ResourcePageParser {
 				}
 
 				resource.setDescription(Base64.getEncoder().encodeToString(descriptionText.html().getBytes()));
+			}
+		}
+		{
+			Element downloadButton = document.select("label.downloadButton").first();
+			Element innerLink = downloadButton.select("a.inner").first();
+			Element minorText = innerLink.select("small.minorText").first();
+			String[] minorTextSplit = minorText.text().split("\\s+");
+
+			if (minorText.text().contains("external")) {// External
+				resource.setFile(new ResourceFile("external", 0, "", innerLink.attr("href")));
+			} else {
+				resource.setFile(new ResourceFile(minorTextSplit[2], Float.parseFloat(minorTextSplit[0]), minorTextSplit[1], innerLink.attr("href")));// 32.6 KB .sk
 			}
 		}
 
