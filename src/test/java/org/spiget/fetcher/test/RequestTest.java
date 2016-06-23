@@ -20,6 +20,7 @@ public class RequestTest {
 	public RequestTest() {
 		SpigetFetcher.config = new JsonObject();
 		SpigetFetcher.config.addProperty("request.userAgent", "Spiget-v2-Test");
+		SpigetFetcher.config.addProperty("debug.connections", false);
 	}
 
 	@Test
