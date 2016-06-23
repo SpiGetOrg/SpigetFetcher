@@ -12,6 +12,7 @@ import org.spiget.fetcher.parser.ResourcePageParser;
 import org.spiget.fetcher.request.SpigetClient;
 
 import java.io.IOException;
+import java.util.Base64;
 
 import static org.junit.Assert.*;
 
@@ -36,7 +37,7 @@ public class RequestTest {
 		assertEquals(21779, parsed.getId());
 		assertEquals("SaturationPreview", parsed.getName());
 		assertNotNull(parsed.getDescription());
-		assertTrue(parsed.getDescription().startsWith("This plugin shows you the amount of saturation a food item regenerates."));
+		assertTrue(new String(Base64.getDecoder().decode(parsed.getDescription())).startsWith("This plugin shows you the amount of saturation a food item regenerates."));
 	}
 
 }
