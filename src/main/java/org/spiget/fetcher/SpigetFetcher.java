@@ -9,10 +9,13 @@ import org.jsoup.select.Elements;
 import org.spiget.data.author.ListedAuthor;
 import org.spiget.data.category.ListedCategory;
 import org.spiget.data.resource.ListedResource;
+import org.spiget.data.resource.Resource;
+import org.spiget.data.resource.version.ResourceVersion;
 import org.spiget.database.DatabaseClient;
 import org.spiget.fetcher.parser.Paginator;
 import org.spiget.fetcher.parser.ResourceListItemParser;
 import org.spiget.fetcher.parser.ResourcePageParser;
+import org.spiget.fetcher.parser.ResourceVersionItemParser;
 import org.spiget.fetcher.request.SpigetClient;
 import org.spiget.fetcher.request.SpigetResponse;
 
@@ -124,7 +127,30 @@ public class SpigetFetcher {
 						} catch (Throwable throwable) {
 							log.error("Unexpected exception while parsing full resource #" + listedResource.getId(), throwable);
 						}
+						// Do this inside of here, so we can be sure we actually have a Resource object
+						if (mode.isUpdateResourceVersions()) {
+							ResourceVersionItemParser resourceVersionItemParser = new ResourceVersionItemParser();
+							try {
+								Document versionDocument = SpigetClient.get(SpigetClient.BASE_URL + "resources/" + listedResource.getId()+"/history").getDocument();
+								Element resourceHistory = versionDocument.select("table.resourceHistory").first();
+								Elements versionElements = resourceHistory.select("tr.dataRow");
+								boolean first=true;
+								for (Element versionElement : versionElements) {
+									if (first) {
+										// The first row is the table header
+										first=false;
+										continue;
+									}
+
+									ResourceVersion resourceVersion=resourceVersionItemParser.parse(versionElement);
+									((Resource) listedResource).getVersions().add(resourceVersion);
+								}
+							} catch (Throwable throwable) {
+								log.error("Unexpected exception while parsing resource versions for #" + listedResource.getId(), throwable);
+							}
+						}
 					}
+
 
 					ListedResource databaseResource = databaseClient.getResource(listedResource.getId());
 					if (databaseResource != null) {
