@@ -1,5 +1,6 @@
 package org.spiget.fetcher.test;
 
+import com.google.gson.JsonObject;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -9,17 +10,24 @@ import org.spiget.data.category.ListedCategory;
 import org.spiget.data.resource.ListedResource;
 import org.spiget.data.resource.Resource;
 import org.spiget.data.resource.version.ListedResourceVersion;
+import org.spiget.fetcher.SpigetFetcher;
 import org.spiget.fetcher.parser.ParserUtil;
 import org.spiget.fetcher.parser.ResourceListItemParser;
 import org.spiget.fetcher.parser.ResourcePageParser;
 
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.Base64;
 import java.util.TimeZone;
 
 import static org.junit.Assert.*;
 
 public class ParseTest {
+
+	public ParseTest() {
+		SpigetFetcher.config = new JsonObject();
+		SpigetFetcher.config.addProperty("request.userAgent", "Spiget-v2-Test");
+	}
 
 	@Test
 	public void systemTimezoneTest() {
@@ -64,7 +72,7 @@ public class ParseTest {
 		assertEquals(Arrays.asList("1.7", "1.8", "1.9"), parsed.getTestedVersions());
 		assertEquals("inventivetalent", parsed.getAuthor().getName());
 		assertNotNull(parsed.getDescription());
-		assertTrue(parsed.getDescription().startsWith("This plugin allows you to swap the items in your hotbar with other items in your inventory."));
+		assertTrue(new String(Base64.getDecoder().decode(parsed.getDescription())).startsWith("This plugin allows you to swap the items in your hotbar with other items in your inventory."));
 	}
 
 }
