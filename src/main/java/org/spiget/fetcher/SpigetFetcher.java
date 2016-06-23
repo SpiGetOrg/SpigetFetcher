@@ -10,12 +10,10 @@ import org.spiget.data.author.ListedAuthor;
 import org.spiget.data.category.ListedCategory;
 import org.spiget.data.resource.ListedResource;
 import org.spiget.data.resource.Resource;
+import org.spiget.data.resource.update.ResourceUpdate;
 import org.spiget.data.resource.version.ResourceVersion;
 import org.spiget.database.DatabaseClient;
-import org.spiget.fetcher.parser.Paginator;
-import org.spiget.fetcher.parser.ResourceListItemParser;
-import org.spiget.fetcher.parser.ResourcePageParser;
-import org.spiget.fetcher.parser.ResourceVersionItemParser;
+import org.spiget.fetcher.parser.*;
 import org.spiget.fetcher.request.SpigetClient;
 import org.spiget.fetcher.request.SpigetResponse;
 
@@ -150,6 +148,30 @@ public class SpigetFetcher {
 								listedResource.setVersion(((Resource) listedResource).getVersions().get(0));
 							} catch (Throwable throwable) {
 								log.error("Unexpected exception while parsing resource versions for #" + listedResource.getId(), throwable);
+							}
+						}
+
+						if (mode.isUpdateUpdates()) {
+							ResourceUpdateItemParer resourceUpdateItemParer = new ResourceUpdateItemParer();
+							ResourceUpdateParser resourceUpdateParser = new ResourceUpdateParser();
+							try {
+								int pageCount = Paginator.parseDocumentPageCount(SpigetClient.get(SpigetClient.BASE_URL + "resources/" + listedResource.getId() + "/updates").getDocument());
+								int maxPage = Math.min(pageCount, config.get("fetch.resources.updates.maxPage").getAsInt());
+								Paginator resourceUpdatesPaginator = new Paginator(SpigetClient.BASE_URL + "resources/" + listedResource.getId() + "/updates?page=%s", maxPage, false);
+								for (Document updateDocument : resourceUpdatesPaginator) {
+									Elements resourceUpdateElements = updateDocument.select("li.resourceUpdate");
+									for (Element resourceUpdateElement : resourceUpdateElements) {
+										ResourceUpdate resourceUpdate = resourceUpdateItemParer.parse(resourceUpdateElement);
+										Document resourceUpdateDocument = SpigetClient.get(SpigetClient.BASE_URL + "resources/" + listedResource.getId() + "/update?update=" + resourceUpdate.getId()).getDocument();
+										resourceUpdate = resourceUpdateParser.parse(resourceUpdateDocument, resourceUpdate);
+
+										((Resource) listedResource).getUpdates().add(resourceUpdate);
+
+										databaseClient.updateOrInsertUpdate(listedResource, resourceUpdate);
+									}
+								}
+							} catch (Throwable throwable) {
+								log.error("Unexpected exception while parsing resource updates for #" + listedResource.getId(), throwable);
 							}
 						}
 					}
