@@ -1,6 +1,7 @@
 package org.spiget.fetcher.parser;
 
 import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Element;
 import org.spiget.fetcher.request.SpigetClient;
 import org.spiget.fetcher.request.SpigetResponse;
 
@@ -64,6 +65,14 @@ public class Paginator implements Iterable<Document> {
 		public Document next() {
 			return getPage(inverted ? currentPage-- : currentPage++);
 		}
+	}
+
+	public static int parseNavPageCount(Element pageNav) {
+		return Integer.parseInt(pageNav.attr("data-last"));
+	}
+
+	public static int parseDocumentPageCount(Document document) {
+		return parseNavPageCount(document.select("div.PageNav").first());
 	}
 
 }
