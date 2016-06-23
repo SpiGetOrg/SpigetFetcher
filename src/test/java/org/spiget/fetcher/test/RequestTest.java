@@ -17,11 +17,13 @@ import static org.junit.Assert.*;
 
 public class RequestTest {
 
-	@Test
-	public void resourceRequestParseTest() throws IOException, InterruptedException {
+	public RequestTest() {
 		SpigetFetcher.config = new JsonObject();
 		SpigetFetcher.config.addProperty("request.userAgent", "Spiget-v2-Test");
+	}
 
+	@Test
+	public void resourceRequestParseTest() throws IOException, InterruptedException {
 		ListedResource base = new ListedResource(21779, "SaturationPreview");//Would be provided by the resource list fetcher
 		base.setCategory(new ListedCategory(22, "Mechanics"));
 		base.setVersion(new ListedResourceVersion("1.2.1"));
