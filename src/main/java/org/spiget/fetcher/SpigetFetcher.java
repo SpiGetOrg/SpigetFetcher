@@ -181,7 +181,7 @@ public class SpigetFetcher {
 
 										((Resource) listedResource).getUpdates().add(resourceUpdate);
 										((Resource) listedResource).setLikes(((Resource) listedResource).getLikes() + resourceUpdate.getLikes());
-										
+
 										databaseClient.updateOrInsertUpdate(listedResource, resourceUpdate);
 									}
 								}
@@ -211,7 +211,7 @@ public class SpigetFetcher {
 										}
 
 										log.info("Downloading '" + ((Resource) listedResource).getFile().getUrl() + "' to '" + outputFile + "'...");
-										SpigetDownload download = SpigetClient.download(((Resource) listedResource).getFile().getUrl());
+										SpigetDownload download = SpigetClient.download(SpigetClient.BASE_URL + ((Resource) listedResource).getFile().getUrl());
 										ReadableByteChannel channel = Channels.newChannel(download.getInputStream());
 										FileOutputStream out = new FileOutputStream(outputFile);
 										out.getChannel().transferFrom(channel, 0, 10000000L/*10MB, should be enough*/);
