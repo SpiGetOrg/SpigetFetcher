@@ -14,10 +14,15 @@ import org.spiget.data.resource.version.ResourceVersion;
 import org.spiget.database.DatabaseClient;
 import org.spiget.fetcher.parser.*;
 import org.spiget.fetcher.request.SpigetClient;
+import org.spiget.fetcher.request.SpigetDownload;
 import org.spiget.fetcher.request.SpigetResponse;
 
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.IOException;
+import java.nio.channels.Channels;
+import java.nio.channels.ReadableByteChannel;
 
 @Log4j2
 public class SpigetFetcher {
@@ -179,6 +184,40 @@ public class SpigetFetcher {
 								log.error("Unexpected exception while parsing resource updates for #" + listedResource.getId(), throwable);
 							}
 						}
+						if (!((Resource) listedResource).isExternal()) {
+							if (SpigetFetcher.config.get("fetch.resources.download").getAsBoolean()) {
+								String basePath = SpigetFetcher.config.get("fetch.resources.downloadBase").getAsString();
+								if (basePath != null && !basePath.isEmpty()) {
+									log.info("Downloading #" + listedResource.getId());
+									try {
+										File outputFile = makeDownloadFile(basePath, String.valueOf(listedResource.getId()));
+										if (outputFile.exists()) {
+											log.debug("Overwriting existing file");
+										} else {
+											outputFile.createNewFile();
+
+											String os = System.getProperty("os.name").toLowerCase();
+											if (os.contains("nix") || os.contains("nux") || os.contains("aix")) {
+												Runtime.getRuntime().exec("chmod 777 " + outputFile);
+											}
+
+											outputFile.setReadable(true);
+											outputFile.setWritable(true);
+										}
+
+										log.info("Downloading '" + ((Resource) listedResource).getFile().getUrl() + "' to '" + outputFile + "'...");
+										SpigetDownload download = SpigetClient.download(((Resource) listedResource).getFile().getUrl());
+										ReadableByteChannel channel = Channels.newChannel(download.getInputStream());
+										FileOutputStream out = new FileOutputStream(outputFile);
+										out.getChannel().transferFrom(channel, 0, 10000000L/*10MB, should be enough*/);
+										out.flush();
+										out.close();
+									} catch (IOException e) {
+										log.warn("Download for resource #" + listedResource.getId() + " failed", e);
+									}
+								}
+							}
+						}
 					}
 
 					ListedResource databaseResource = databaseClient.getResource(listedResource.getId());
@@ -208,6 +247,27 @@ public class SpigetFetcher {
 
 		long end = System.currentTimeMillis();
 		databaseClient.updateStatus("fetch.end", end);
+	}
+
+	File makeDownloadFile(String baseDir, String resource) {
+		String[] split = resource.split("");
+		if (split.length == 0) {
+			log.warn("Invalid resource ID! split.length == 0");
+			return new File(new File(baseDir, "INVALID"), String.valueOf(System.currentTimeMillis()));
+		}
+
+		File finalFolder = new File(baseDir);
+		for (int i = 0; i < split.length - 1; i++) {
+			String s = split[i];
+			finalFolder = new File(finalFolder, s);
+			if (!finalFolder.exists()) {
+				finalFolder.mkdir();
+				finalFolder.setReadable(true, false);
+				finalFolder.setWritable(true, false);
+			}
+		}
+
+		return new File(finalFolder, resource + ".res");
 	}
 
 }
