@@ -128,6 +128,7 @@ public class SpigetFetcher {
 							listedResource = resourcePageParser.parse(resourceDocument, listedResource);
 						} catch (Throwable throwable) {
 							log.error("Unexpected exception while parsing full resource #" + listedResource.getId(), throwable);
+							continue;
 						}
 						// Do this inside of here, so we can be sure we actually have a Resource object
 						if (mode.isUpdateResourceVersions()) {
