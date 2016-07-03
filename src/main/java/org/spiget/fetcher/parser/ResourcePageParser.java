@@ -67,11 +67,31 @@ public class ResourcePageParser {
 
 		// Links
 		{
-			{
+			{// Discussion
 				Element resourceTabDiscussion = document.select("li.resourceTabDiscussion").first();
 				if (resourceTabDiscussion != null) {
 					Element discussionLink = resourceTabDiscussion.select("a").first();
 					resource.getLinks().put("discussion", discussionLink.attr("href"));
+				}
+			}
+			{// Additional information
+				Element resourceInfo = document.select("div.statsList#resourceInfo").first();
+				if (resourceInfo != null) {
+					Element footnote = resourceInfo.select("div.footnote").first();
+					if (footnote != null) {
+						Element footnoteLink = footnote.select("a").first();
+						resource.getLinks().put("additionalInformation", footnoteLink.attr("href"));
+					}
+				}
+			}
+			{// Alternative support
+				Element sidebar = document.select("div.sidebar").first();
+				Element callToAction = sidebar.select("a.callToAction").first();
+				if (callToAction != null) {
+					String href = callToAction.attr("href");
+					if (!href.startsWith("threads/")) {
+						resource.getLinks().put("alternativeSupport", href);
+					}// There's no alternative URL, only the discussion link
 				}
 			}
 		}
