@@ -65,6 +65,17 @@ public class ResourcePageParser {
 			}
 		}
 
+		// Links
+		{
+			{
+				Element resourceTabDiscussion = document.select("li.resourceTabDiscussion").first();
+				if (resourceTabDiscussion != null) {
+					Element discussionLink = resourceTabDiscussion.select("a").first();
+					resource.getLinks().put("discussion", discussionLink.attr("href"));
+				}
+			}
+		}
+
 		return resource;
 	}
 
