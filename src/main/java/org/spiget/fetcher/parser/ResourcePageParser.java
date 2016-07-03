@@ -59,6 +59,7 @@ public class ResourcePageParser {
 
 			if (minorText.text().contains("external")) {// External
 				resource.setFile(new ResourceFile("external", 0, "", innerLink.attr("href")));
+				resource.setExternal(true);
 			} else {
 				resource.setFile(new ResourceFile(minorTextSplit[2], Float.parseFloat(minorTextSplit[0]), minorTextSplit[1], innerLink.attr("href")));// 32.6 KB .sk
 			}
