@@ -178,9 +178,10 @@ public class SpigetFetcher {
 										Document resourceUpdateLikesDocument = SpigetClient.get(SpigetClient.BASE_URL + "resources/" + listedResource.getId() + "/update-likes?resource_update_id=" + resourceUpdate.getId()).getDocument();
 										Elements likesElements = resourceUpdateLikesDocument.select("li.memberListItem");
 										resourceUpdate.setLikes(likesElements.size());
-										
-										((Resource) listedResource).getUpdates().add(resourceUpdate);
 
+										((Resource) listedResource).getUpdates().add(resourceUpdate);
+										((Resource) listedResource).setLikes(((Resource) listedResource).getLikes() + resourceUpdate.getLikes());
+										
 										databaseClient.updateOrInsertUpdate(listedResource, resourceUpdate);
 									}
 								}
