@@ -7,7 +7,6 @@ import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 import org.spiget.data.author.ListedAuthor;
-import org.spiget.data.category.ListedCategory;
 import org.spiget.data.resource.ListedResource;
 import org.spiget.data.resource.Resource;
 import org.spiget.data.resource.update.ResourceUpdate;
@@ -200,14 +199,7 @@ public class SpigetFetcher {
 						databaseClient.insertAuthor(listedResource.getAuthor());
 					}
 
-					ListedCategory databaseCategory = databaseClient.getCategory(listedResource.getCategory().getId());
-					if (databaseCategory != null) {
-						log.info("Updating existing category #" + listedResource.getCategory().getId());
-						databaseClient.updateCategory(listedResource.getCategory());
-					} else {
-						log.info("Inserting new category #" + listedResource.getCategory().getId());
-						databaseClient.insertCategory(listedResource.getCategory());
-					}
+					databaseClient.updateOrInsertCategory(listedResource.getCategory());
 				} catch (Throwable throwable) {
 					log.error("Unexpected exception while parsing item #" + itemCounter + " on page " + pageCounter, throwable);
 				}
