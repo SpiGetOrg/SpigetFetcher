@@ -195,7 +195,7 @@ public class SpigetFetcher {
 								if (basePath != null && !basePath.isEmpty()) {
 									log.info("Downloading #" + listedResource.getId());
 									try {
-										File outputFile = makeDownloadFile(basePath, String.valueOf(listedResource.getId()));
+										File outputFile = makeDownloadFile(basePath, String.valueOf(listedResource.getId()), ((Resource) listedResource).getFile().getType());
 										if (outputFile.exists()) {
 											log.debug("Overwriting existing file");
 										} else {
@@ -254,7 +254,7 @@ public class SpigetFetcher {
 		databaseClient.updateStatus("fetch.end", end);
 	}
 
-	File makeDownloadFile(String baseDir, String resource) {
+	File makeDownloadFile(String baseDir, String resource, String type) {
 		String[] split = resource.split("");
 		if (split.length == 0) {
 			log.warn("Invalid resource ID! split.length == 0");
@@ -272,7 +272,7 @@ public class SpigetFetcher {
 			}
 		}
 
-		return new File(finalFolder, resource + ".res");
+		return new File(finalFolder, resource + type);
 	}
 
 }
