@@ -76,7 +76,7 @@ public class SpigetFetcher {
 						config.get("database.pass").getAsString().toCharArray(),
 						config.get("database.db").getAsString());
 				databaseClient.connect(config.get("database.timeout").getAsInt());
-				databaseClient.databaseCount();
+				databaseClient.collectionCount();
 				log.info("Connection successful (" + (System.currentTimeMillis() - testStart) + "ms)");
 			} catch (Exception e) {
 				log.fatal("Connection failed after " + (System.currentTimeMillis() - testStart) + "ms", e);
