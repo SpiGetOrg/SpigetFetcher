@@ -17,5 +17,7 @@
   "fetch.resources.downloadBase": "",
   "debug.connections": false,
   "debug.parse.resource.items": false,
-  "debug.parse.resource.page": false
+  "debug.parse.resource.page": false,
+  "webhook.failThreshold": 3,
+  "webhook.postThreads": 2
 }
