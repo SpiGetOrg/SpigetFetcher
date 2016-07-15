@@ -6,16 +6,21 @@ import lombok.extern.log4j.Log4j2;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
+import org.spiget.data.author.Author;
 import org.spiget.data.author.ListedAuthor;
 import org.spiget.data.resource.ListedResource;
 import org.spiget.data.resource.Resource;
 import org.spiget.data.resource.update.ResourceUpdate;
 import org.spiget.data.resource.version.ResourceVersion;
+import org.spiget.data.webhook.event.author.NewAuthorEvent;
+import org.spiget.data.webhook.event.resource.NewResourceEvent;
+import org.spiget.data.webhook.event.resource.ResourceUpdateEvent;
 import org.spiget.database.DatabaseClient;
 import org.spiget.fetcher.parser.*;
 import org.spiget.fetcher.request.SpigetClient;
 import org.spiget.fetcher.request.SpigetDownload;
 import org.spiget.fetcher.request.SpigetResponse;
+import org.spiget.fetcher.webhook.WebhookExecutor;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -31,6 +36,8 @@ public class SpigetFetcher {
 
 	public static DatabaseClient databaseClient;
 	public static FetchMode mode = FetchMode.LIST;
+
+	WebhookExecutor webhookExecutor = new WebhookExecutor();
 
 	public SpigetFetcher() {
 	}
@@ -230,9 +237,19 @@ public class SpigetFetcher {
 					if (databaseResource != null) {
 						log.info("Updating existing resource #" + listedResource.getId());
 						databaseClient.updateResource(listedResource);
+
+						if (databaseResource.getUpdateDate() != listedResource.getUpdateDate()) {// There was actually an update
+							if (listedResource instanceof Resource) {
+								webhookExecutor.callEvent(new ResourceUpdateEvent((Resource) listedResource));
+							}
+						}
 					} else {
 						log.info("Inserting new resource #" + listedResource.getId());
 						databaseClient.insertResource(listedResource);
+
+						if (listedResource instanceof Resource) {
+							webhookExecutor.callEvent(new NewResourceEvent((Resource) listedResource));
+						}
 					}
 
 					ListedAuthor databaseAuthor = databaseClient.getAuthor(listedResource.getAuthor().getId());
@@ -242,6 +259,10 @@ public class SpigetFetcher {
 					} else {
 						log.info("Inserting new author #" + listedResource.getAuthor().getId());
 						databaseClient.insertAuthor(listedResource.getAuthor());
+
+						if (listedResource.getAuthor() instanceof Author) {
+							webhookExecutor.callEvent(new NewAuthorEvent((Author) listedResource.getAuthor()));
+						}
 					}
 
 					databaseClient.updateOrInsertCategory(listedResource.getCategory());
