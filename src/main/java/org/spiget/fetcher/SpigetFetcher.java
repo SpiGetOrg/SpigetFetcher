@@ -3,6 +3,7 @@ package org.spiget.fetcher;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import lombok.extern.log4j.Log4j2;
+import org.apache.logging.log4j.Level;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
@@ -275,6 +276,21 @@ public class SpigetFetcher {
 
 		long end = System.currentTimeMillis();
 		databaseClient.updateStatus("fetch.end", end);
+
+		log.info("Waiting for (" + webhookExecutor.pendingCalls + ") Webhooks to complete...");
+		while (!webhookExecutor.isFinished()) {
+			try {
+				Thread.sleep(1000);
+			} catch (InterruptedException e) {
+				log.log(Level.ERROR, "Webhook-delay interrupted", e);
+			}
+		}
+
+		try {
+			databaseClient.disconnect();
+		} catch (IOException e) {
+			log.log(Level.WARN, "Failed to disconnect from database", e);
+		}
 	}
 
 	File makeDownloadFile(String baseDir, String resource, String type) {
