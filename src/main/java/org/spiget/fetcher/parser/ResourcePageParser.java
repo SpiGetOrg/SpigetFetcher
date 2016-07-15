@@ -52,7 +52,7 @@ public class ResourcePageParser {
 					for (Element linkElement : descriptionText.select("a")) {
 						if (linkElement.text() != null && linkElement.text().length() > 0) {
 							if (linkElement.hasAttr("href")) {
-								resource.getLinks().put("custom:" + linkElement.text(), linkElement.attr("href"));
+								resource.getLinks().put(("custom:" + linkElement.text()).replace('.', '\u002e'), linkElement.attr("href"));
 							}
 						}
 					}
