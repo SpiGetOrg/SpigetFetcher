@@ -48,6 +48,16 @@ public class ResourcePageParser {
 					customResourceFields.remove();// Remove so we only have the actual description left
 				}
 
+				{// Custom links
+					for (Element linkElement : descriptionText.select("a")) {
+						if (linkElement.text() != null && linkElement.text().length() > 0) {
+							if (linkElement.hasAttr("href")) {
+								resource.getLinks().put("custom:" + linkElement.text(), linkElement.attr("href"));
+							}
+						}
+					}
+				}
+
 				resource.setDescription(Base64.getEncoder().encodeToString(descriptionText.html().getBytes()));
 			}
 		}
