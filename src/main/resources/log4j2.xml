@@ -4,14 +4,18 @@
         <Console name="Console" target="SYSTEM_OUT">
             <PatternLayout pattern="%highlight{%d{HH:mm:ss.SSS} [%t] %-5level %-20logger{1} %msg%n}{FATAL=white, ERROR=red, WARN=yellow, INFO=white, DEBUG=green, TRACE=blue}"/>
         </Console>
-        <File name="MyFile" fileName="fetcher.log" immediateFlush="false" append="false">
-            <PatternLayout pattern="%d{yyy-MM-dd HH:mm:ss.SSS} [%t] %-5level %-20logger{1} %msg%n"/>
-        </File>
+        <RollingRandomAccessFile name="File" fileName="logs/latest.log" filePattern="logs/%d{yyyy-MM-dd}-%i.log.gz">
+            <PatternLayout pattern="%d{yyy-MM-dd HH:mm:ss.SSS} [%t] %-5level %-20logger{1} %msg%nn" />
+            <Policies>
+                <TimeBasedTriggeringPolicy />
+                <OnStartupTriggeringPolicy />
+            </Policies>
+        </RollingRandomAccessFile>
     </Appenders>
     <Loggers>
         <Root level="debug">
             <AppenderRef ref="Console"/>
-            <AppenderRef ref="MyFile"/>
+            <AppenderRef ref="File"/>
         </Root>
     </Loggers>
 </Configuration>
