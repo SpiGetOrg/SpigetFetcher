@@ -115,16 +115,21 @@ public class SpigetFetcher {
 		databaseClient.updateStatus("fetch.end", 0);
 
 		int pageAmount = config.get("fetch.resources.pages").getAsInt();
+		int pageOffset = config.get("fetch.resources.pageOffset").getAsInt();
 		databaseClient.updateStatus("fetch.page.amount", pageAmount);
 		int pageCounter = 0;
 		Paginator resourceListPaginator = new Paginator(SpigetClient.BASE_URL + "resources/?page=%s", pageAmount, config.get("fetch.resources.inverted").getAsBoolean());
 		//noinspection ForLoopReplaceableByForEach
-		for (Iterator<Document> iterator=resourceListPaginator.iterator();iterator.hasNext();) {
+		for (Iterator<Document> iterator = resourceListPaginator.iterator(); iterator.hasNext(); ) {
 			pageCounter++;
 			log.info("Fetching page " + pageCounter + "/" + pageAmount);
 			try {
 				databaseClient.updateStatus("fetch.page.index", pageCounter);
 				Document document = iterator.next();
+				if (pageCounter < pageOffset) {
+					log.info("Skipping page #" + pageCounter + " (Offset: " + pageOffset + ")");
+					continue;
+				}
 
 				ResourceListItemParser resourceItemParser = new ResourceListItemParser();
 				ResourcePageParser resourcePageParser = new ResourcePageParser();
