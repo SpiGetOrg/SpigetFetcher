@@ -14,6 +14,7 @@
   "fetch.resources.pageOffset": 0,
   "fetch.resources.inverted": true,
   "fetch.resources.updates.maxPage": 1,
+  "fetch.resources.reviews.maxPage":1,
   "fetch.resources.download": false,
   "fetch.resources.downloadBase": "",
   "debug.connections": false,

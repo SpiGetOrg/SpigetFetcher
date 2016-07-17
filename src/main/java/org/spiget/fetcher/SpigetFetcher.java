@@ -11,6 +11,7 @@ import org.spiget.data.author.Author;
 import org.spiget.data.author.ListedAuthor;
 import org.spiget.data.resource.ListedResource;
 import org.spiget.data.resource.Resource;
+import org.spiget.data.resource.ResourceReview;
 import org.spiget.data.resource.update.ResourceUpdate;
 import org.spiget.data.resource.version.ResourceVersion;
 import org.spiget.data.webhook.event.author.NewAuthorEvent;
@@ -206,6 +207,35 @@ public class SpigetFetcher {
 									}
 								} catch (Throwable throwable) {
 									log.error("Unexpected exception while parsing resource updates for #" + listedResource.getId(), throwable);
+								}
+							}
+							if (mode.isUpdateReviews()) {
+								ResourceReviewItemParser reviewItemParser = new ResourceReviewItemParser();
+								try {
+									int pageCount = Paginator.parseDocumentPageCount(SpigetClient.get(SpigetClient.BASE_URL + "resources/" + listedResource.getId() + "/reviews").getDocument());
+									int maxPage = Math.min(pageCount, config.get("fetch.resources.reviews.maxPage").getAsInt());
+									Paginator resourceReviewsPaginator = new Paginator(SpigetClient.BASE_URL + "resources/" + listedResource.getId() + "/reviews?page=%s", maxPage, false);
+									for (Document reviewDocument : resourceReviewsPaginator) {
+										Element resourceReviewsTab = reviewDocument.select("li.resourceTabReviews").first();
+										if (resourceReviewsTab == null || !resourceReviewsTab.hasClass("active")) {
+											// We're not on the reviews page, which probably means the resource hasn't been reviewed yet.
+											break;
+										}
+
+										Elements reviewElements = reviewDocument.select("li.review");
+										for (Element reviewElement : reviewElements) {
+											ResourceReview review = reviewItemParser.parse(reviewElement);
+
+											((Resource) listedResource).getReviews().add(review);
+
+											Author databaseReviewAuthor = databaseClient.getAuthor(review.getAuthor().getId());
+											if (databaseReviewAuthor == null) {// Only insert if the document doesn't exist, so we don't accidentally overwrite existing data
+												databaseClient.insertAuthor(review.getAuthor());
+											}
+										}
+									}
+								} catch (Throwable throwable) {
+									log.error("Unexpected exception while parsing resource reviews for #" + listedResource.getId(), throwable);
 								}
 							}
 							if (!((Resource) listedResource).isExternal()) {

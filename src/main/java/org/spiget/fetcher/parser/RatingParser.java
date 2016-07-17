@@ -13,4 +13,9 @@ public class RatingParser {
 		return new Rating(Integer.parseInt(stringToInt(resourceRatingsHint.text().split(" ")[0])), Float.parseFloat(resourceRatings.attr("title")));
 	}
 
+	public Rating parseSingle(Element ratingElement) {
+		Element resourceRatings = ratingElement.select("span.ratings").first();// <span class="ratings" title="4.90">
+		return new Rating(1, Float.parseFloat(resourceRatings.attr("title")));
+	}
+
 }
