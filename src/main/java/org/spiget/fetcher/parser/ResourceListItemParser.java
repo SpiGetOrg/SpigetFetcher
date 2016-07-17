@@ -117,9 +117,8 @@ public class ResourceListItemParser {
 			{
 				Element resourceRatingContainer = resourceStats.select("div.rating").first();
 				{
-					Element resourceRatings = resourceRatingContainer.select("span.ratings").first();// <span class="ratings" title="4.90">
-					Element resourceRatingsHint = resourceRatingContainer.select("span.Hint").first();// <span class="Hint">10 ratings</span>
-					listedResource.setRating(new Rating(Integer.parseInt(stringToInt(resourceRatingsHint.text().split(" ")[0])), Float.parseFloat(resourceRatings.attr("title"))));
+					Rating rating = new RatingParser().parse(resourceRatingContainer);
+					listedResource.setRating(rating);
 				}
 			}
 			{

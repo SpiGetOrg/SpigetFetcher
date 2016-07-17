@@ -35,9 +35,8 @@ public class ResourceVersionItemParser {
 			resourceVersion.setReleaseDate(parseTimeOrTitle(releaseDateTime));
 		}
 		{
-			Element ratings = rating.select("span.ratings").first();// <span class="ratings" title="3.00">
-			Element ratingsHint = rating.select("span.Hint").first();// <span class="Hint">1 rating</span>
-			resourceVersion.setRating(new Rating(Integer.parseInt(ratingsHint.text().split(" ")[0]), Float.parseFloat(ratings.attr("title"))));
+			Rating rating1 = new RatingParser().parse(rating);
+			resourceVersion.setRating(rating1);
 		}
 
 		return resourceVersion;
