@@ -10,8 +10,6 @@ import org.spiget.data.resource.SpigetIcon;
 import org.spiget.data.resource.version.ListedResourceVersion;
 import org.spiget.fetcher.SpigetFetcher;
 
-import java.io.IOException;
-
 import static org.spiget.fetcher.parser.ParserUtil.*;
 
 /**
@@ -73,37 +71,13 @@ public class ResourceListItemParser {
 
 			{
 				Element resourceIcon = resourceImage.select("a.resourceIcon").first();
-				Element resourceIconImage = resourceIcon.select("img").first();// <img src="data/resource_icons/12/1234.jpg?12345" alt="">
-
-				String iconSource = resourceIconImage.attr("src");
-				String iconData = "";
-				if (iconSource.contains("static.spigotmc.org")) {
-					iconSource = "";
-				} else {
-					try {
-						iconData = iconToBase64(iconSource);
-					} catch (IOException | InterruptedException e) {
-						log.warn("Failed to download icon data for #" + listedResource.getId(), e);
-					}
-				}
-				listedResource.setIcon(new SpigetIcon(iconSource, iconData));
+				SpigetIcon icon = new IconParser().parse(resourceIcon);
+				listedResource.setIcon(icon);
 			}
 			{
 				Element resourceAvatar = resourceImage.select("a.avatar").first();
-				Element resourceAvatarImage = resourceAvatar.select("img").first();// <img src="data/avatars/s/54/54321.jpg?54321" width="48" height="48" alt="example">
-
-				String avatarSource = resourceAvatarImage.attr("src");
-				String avatarData = "";
-				if (avatarSource.contains("static.spigotmc.org")) {
-					avatarSource = "";
-				} else {
-					try {
-						avatarData = iconToBase64(avatarSource);
-					} catch (IOException | InterruptedException e) {
-						log.warn("Failed to download avatar for #" + listedResource.getId(), e);
-					}
-				}
-				listedResource.getAuthor().setIcon(new SpigetIcon(avatarSource, avatarData));
+				SpigetIcon avatar = new IconParser().parse(resourceAvatar);
+				listedResource.getAuthor().setIcon(avatar);
 			}
 		}
 
