@@ -16,6 +16,7 @@ public class JsoupClient extends SpigetClient {
 		connection.followRedirects(true);
 		connection.ignoreHttpErrors(true);
 		connection.ignoreContentType(true);
+		connection.timeout(5000);
 
 		Connection.Response response = connection.execute();
 		Document document = response.parse();

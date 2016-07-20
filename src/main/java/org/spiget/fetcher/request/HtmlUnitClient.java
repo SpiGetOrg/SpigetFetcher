@@ -28,7 +28,7 @@ public class HtmlUnitClient extends SpigetClient {
 		webClient.getOptions().setJavaScriptEnabled(true);
 		webClient.setJavaScriptTimeout(3600);
 
-		webClient.getOptions().setTimeout(3000);
+		webClient.getOptions().setTimeout(5000);
 		webClient.getOptions().setCssEnabled(false);
 		webClient.getOptions().setRedirectEnabled(true);
 		webClient.getOptions().setThrowExceptionOnFailingStatusCode(false);
