@@ -26,7 +26,6 @@ public class ResourceVersionItemParser {
 			Element downloadLink = download.select("a").first();
 			String href = downloadLink.attr("href");
 			resourceVersion = new ResourceVersion(Integer.parseInt(extractIdFromUrl(href, PARAM_URL_ID)), version.text());
-			resourceVersion.setUrl(href);
 
 			resourceVersion.setDownloads(Integer.parseInt(stringToInt(downloads.text())));
 		}
