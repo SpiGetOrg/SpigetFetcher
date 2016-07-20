@@ -232,6 +232,8 @@ public class SpigetFetcher {
 											if (databaseReviewAuthor == null) {// Only insert if the document doesn't exist, so we don't accidentally overwrite existing data
 												databaseClient.insertAuthor(review.getAuthor());
 											}
+
+											databaseClient.updateOrInsertReview(listedResource, review);
 										}
 									}
 								} catch (Throwable throwable) {
