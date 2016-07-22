@@ -38,7 +38,6 @@ public class SpigetFetcher {
 	public static JsonObject config;
 
 	public static DatabaseClient databaseClient;
-	public static FetchMode mode = FetchMode.LIST;
 
 	WebhookExecutor webhookExecutor;
 
@@ -103,9 +102,6 @@ public class SpigetFetcher {
 			}
 		}
 
-		mode = FetchMode.valueOf(config.get("fetch.mode").getAsString());
-		log.info("Fetch mode is " + mode.name());
-
 		return this;
 	}
 
@@ -114,6 +110,11 @@ public class SpigetFetcher {
 		long start = System.currentTimeMillis();
 		databaseClient.updateStatus("fetch.start", start);
 		databaseClient.updateStatus("fetch.end", 0);
+
+		boolean modeResources = config.get("fetch.mode.resources").getAsBoolean();
+		boolean modeResourceVersions = config.get("fetch.mode.resource.versions").getAsBoolean();
+		boolean modeResourceUpdates = config.get("fetch.mode.resource.updates").getAsBoolean();
+		boolean modeResourceReviews = config.get("fetch.mode.resource.reviews").getAsBoolean();
 
 		int pageAmount = config.get("fetch.resources.pages").getAsInt();
 		int pageOffset = config.get("fetch.resources.pageOffset").getAsInt();
@@ -141,7 +142,7 @@ public class SpigetFetcher {
 					databaseClient.updateStatus("fetch.page.item.index", itemCounter);
 					try {
 						ListedResource listedResource = resourceItemParser.parse(resourceListItem);
-						if (mode.isUpdateResource()) {
+						if (modeResources) {
 							try {
 								Document resourceDocument = SpigetClient.get(SpigetClient.BASE_URL + "resources/" + listedResource.getId()).getDocument();
 								listedResource = resourcePageParser.parse(resourceDocument, listedResource);
@@ -150,7 +151,7 @@ public class SpigetFetcher {
 								continue;
 							}
 							// Do this inside of here, so we can be sure we actually have a Resource object
-							if (mode.isUpdateResourceVersions()) {
+							if (modeResourceVersions) {
 								ResourceVersionItemParser resourceVersionItemParser = new ResourceVersionItemParser();
 								try {
 									Document versionDocument = SpigetClient.get(SpigetClient.BASE_URL + "resources/" + listedResource.getId() + "/history").getDocument();
@@ -175,7 +176,7 @@ public class SpigetFetcher {
 								}
 							}
 
-							if (mode.isUpdateUpdates()) {
+							if (modeResourceUpdates) {
 								ResourceUpdateItemParer resourceUpdateItemParer = new ResourceUpdateItemParer();
 								ResourceUpdateParser resourceUpdateParser = new ResourceUpdateParser();
 								try {
@@ -209,7 +210,7 @@ public class SpigetFetcher {
 									log.error("Unexpected exception while parsing resource updates for #" + listedResource.getId(), throwable);
 								}
 							}
-							if (mode.isUpdateReviews()) {
+							if (modeResourceReviews) {
 								ResourceReviewItemParser reviewItemParser = new ResourceReviewItemParser();
 								try {
 									int pageCount = Paginator.parseDocumentPageCount(SpigetClient.get(SpigetClient.BASE_URL + "resources/" + listedResource.getId() + "/reviews").getDocument());
