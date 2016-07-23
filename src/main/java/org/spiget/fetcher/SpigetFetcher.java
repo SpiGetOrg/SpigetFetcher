@@ -140,9 +140,11 @@ public class SpigetFetcher {
 				for (Element resourceListItem : resourceListItems) {
 					itemCounter++;
 					databaseClient.updateStatus("fetch.page.item.index", itemCounter);
+					databaseClient.updateStatus("fetch.page.item.state", "list");
 					try {
 						ListedResource listedResource = resourceItemParser.parse(resourceListItem);
 						if (modeResources) {
+							databaseClient.updateStatus("fetch.page.item.state", "general");
 							try {
 								Document resourceDocument = SpigetClient.get(SpigetClient.BASE_URL + "resources/" + listedResource.getId()).getDocument();
 								listedResource = resourcePageParser.parse(resourceDocument, listedResource);
@@ -152,6 +154,7 @@ public class SpigetFetcher {
 							}
 							// Do this inside of here, so we can be sure we actually have a Resource object
 							if (modeResourceVersions) {
+								databaseClient.updateStatus("fetch.page.item.state", "versions");
 								ResourceVersionItemParser resourceVersionItemParser = new ResourceVersionItemParser();
 								try {
 									Document versionDocument = SpigetClient.get(SpigetClient.BASE_URL + "resources/" + listedResource.getId() + "/history").getDocument();
@@ -177,6 +180,7 @@ public class SpigetFetcher {
 							}
 
 							if (modeResourceUpdates) {
+								databaseClient.updateStatus("fetch.page.item.state", "updates");
 								ResourceUpdateItemParer resourceUpdateItemParer = new ResourceUpdateItemParer();
 								ResourceUpdateParser resourceUpdateParser = new ResourceUpdateParser();
 								try {
@@ -211,6 +215,7 @@ public class SpigetFetcher {
 								}
 							}
 							if (modeResourceReviews) {
+								databaseClient.updateStatus("fetch.page.item.state", "reviews");
 								ResourceReviewItemParser reviewItemParser = new ResourceReviewItemParser();
 								try {
 									int pageCount = Paginator.parseDocumentPageCount(SpigetClient.get(SpigetClient.BASE_URL + "resources/" + listedResource.getId() + "/reviews").getDocument());
@@ -245,6 +250,7 @@ public class SpigetFetcher {
 								if (SpigetFetcher.config.get("fetch.resources.download").getAsBoolean()) {
 									String basePath = SpigetFetcher.config.get("fetch.resources.downloadBase").getAsString();
 									if (basePath != null && !basePath.isEmpty()) {
+										databaseClient.updateStatus("fetch.page.item.state", "download");
 										log.info("Downloading #" + listedResource.getId());
 										try {
 											File outputFile = makeDownloadFile(basePath, String.valueOf(listedResource.getId()), ((Resource) listedResource).getFile().getType());
@@ -276,6 +282,8 @@ public class SpigetFetcher {
 								}
 							}
 						}
+
+						databaseClient.updateStatus("fetch.page.item.state", "database");
 
 						ListedResource databaseResource = databaseClient.getResource(listedResource.getId());
 						if (databaseResource != null) {
