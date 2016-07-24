@@ -300,13 +300,13 @@ public class SpigetFetcher {
 								if (listedResource instanceof Resource) {
 									webhookExecutor.callEvent(new ResourceUpdateEvent((Resource) listedResource));
 								}
-							}
-
-							// If we stop on inverted, it would stop immediately
-							if (!inverted && stopOnExisting) {
-								log.info("Last new resource found (" + pageCounter + "." + itemCounter + "). Stopping.");
-								fetchStopped = true;
-								break;
+							} else {
+								// If we stop on inverted, it would stop immediately
+								if (!inverted && stopOnExisting) {
+									log.info("Last new resource found (" + pageCounter + "." + itemCounter + "). Stopping.");
+									fetchStopped = true;
+									break;
+								}
 							}
 						} else {
 							log.info("Inserting new resource #" + listedResource.getId());
