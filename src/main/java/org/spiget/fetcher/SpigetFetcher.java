@@ -116,13 +116,18 @@ public class SpigetFetcher {
 		boolean modeResourceUpdates = config.get("fetch.mode.resource.updates").getAsBoolean();
 		boolean modeResourceReviews = config.get("fetch.mode.resource.reviews").getAsBoolean();
 
+		boolean stopOnExisting = config.get("fetch.resources.stopOnExisting").getAsBoolean();
+		boolean fetchStopped = false;
+
 		int pageAmount = config.get("fetch.resources.pages").getAsInt();
 		int pageOffset = config.get("fetch.resources.pageOffset").getAsInt();
+		boolean inverted = config.get("fetch.resources.inverted").getAsBoolean();
 		databaseClient.updateStatus("fetch.page.amount", pageAmount);
 		int pageCounter = 0;
-		Paginator resourceListPaginator = new Paginator(SpigetClient.BASE_URL + "resources/?page=%s", pageAmount, config.get("fetch.resources.inverted").getAsBoolean());
+		Paginator resourceListPaginator = new Paginator(SpigetClient.BASE_URL + "resources/?page=%s", pageAmount, inverted);
 		//noinspection ForLoopReplaceableByForEach
 		for (Iterator<Document> iterator = resourceListPaginator.iterator(); iterator.hasNext(); ) {
+			if (fetchStopped) { break; }
 			pageCounter++;
 			log.info("Fetching page " + pageCounter + "/" + pageAmount);
 			try {
@@ -138,6 +143,7 @@ public class SpigetFetcher {
 				Elements resourceListItems = document.select("li.resourceListItem");
 				int itemCounter = 0;
 				for (Element resourceListItem : resourceListItems) {
+					if (fetchStopped) { break; }
 					itemCounter++;
 					databaseClient.updateStatus("fetch.page.item.index", itemCounter);
 					databaseClient.updateStatus("fetch.page.item.state", "list");
@@ -294,6 +300,13 @@ public class SpigetFetcher {
 								if (listedResource instanceof Resource) {
 									webhookExecutor.callEvent(new ResourceUpdateEvent((Resource) listedResource));
 								}
+							}
+
+							// If we stop on inverted, it would stop immediately
+							if (!inverted && stopOnExisting) {
+								log.info("Last new resource found (" + pageCounter + "." + itemCounter + "). Stopping.");
+								fetchStopped = true;
+								break;
 							}
 						} else {
 							log.info("Inserting new resource #" + listedResource.getId());
