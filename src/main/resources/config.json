@@ -18,7 +18,7 @@
   "fetch.resources.inverted": true,
   "fetch.resources.updates.maxPage": 1,
   "fetch.resources.reviews.maxPage": 1,
-  "fetch.resources.stopOnExisting": true,
+  "fetch.resources.stopOnExisting": 5,
   "fetch.resources.download": false,
   "fetch.resources.downloadBase": "",
   "debug.connections": false,

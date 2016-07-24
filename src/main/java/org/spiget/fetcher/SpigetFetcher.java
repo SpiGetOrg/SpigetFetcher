@@ -116,7 +116,8 @@ public class SpigetFetcher {
 		boolean modeResourceUpdates = config.get("fetch.mode.resource.updates").getAsBoolean();
 		boolean modeResourceReviews = config.get("fetch.mode.resource.reviews").getAsBoolean();
 
-		boolean stopOnExisting = config.get("fetch.resources.stopOnExisting").getAsBoolean();
+		int stopOnExisting = config.get("fetch.resources.stopOnExisting").getAsInt();
+		int existingCount = 0;
 		boolean fetchStopped = false;
 
 		int pageAmount = config.get("fetch.resources.pages").getAsInt();
@@ -297,18 +298,21 @@ public class SpigetFetcher {
 							databaseClient.updateResource(listedResource);
 
 							if (databaseResource.getUpdateDate() != listedResource.getUpdateDate()) {// There was actually an update
+								existingCount = 0;
 								if (listedResource instanceof Resource) {
 									webhookExecutor.callEvent(new ResourceUpdateEvent((Resource) listedResource));
 								}
 							} else {
+								existingCount++;
 								// If we stop on inverted, it would stop immediately
-								if (!inverted && stopOnExisting) {
-									log.info("Last new resource found (" + pageCounter + "." + itemCounter + "). Stopping.");
+								if (!inverted && stopOnExisting != -1 && existingCount > stopOnExisting) {
+									log.info("Last new resource found (" + pageCounter + "." + itemCounter + ") #" + existingCount + ". Stopping.");
 									fetchStopped = true;
 									break;
 								}
 							}
 						} else {
+							existingCount = 0;
 							log.info("Inserting new resource #" + listedResource.getId());
 							databaseClient.insertResource(listedResource);
 
