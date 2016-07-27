@@ -48,24 +48,9 @@
 
         <!-- Requests -->
         <dependency>
-            <groupId>org.jsoup</groupId>
-            <artifactId>jsoup</artifactId>
-            <version>1.9.1</version>
-        </dependency>
-        <dependency>
-            <groupId>net.sourceforge.htmlunit</groupId>
-            <artifactId>htmlunit</artifactId>
-            <version>2.18</version>
-        </dependency>
-        <dependency>
-            <groupId>org.eclipse.jetty</groupId>
-            <artifactId>jetty-server</artifactId>
-            <version>9.3.5.v20151012</version>
-        </dependency>
-        <dependency>
-            <groupId>org.eclipse.jetty</groupId>
-            <artifactId>jetty-util</artifactId>
-            <version>9.3.5.v20151012</version>
+            <groupId>org.spiget</groupId>
+            <artifactId>client</artifactId>
+            <version>1.0-SNAPSHOT</version>
         </dependency>
 
         <!-- Logging -->

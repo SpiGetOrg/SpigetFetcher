@@ -2,8 +2,8 @@ package org.spiget.fetcher.parser;
 
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
-import org.spiget.fetcher.request.SpigetClient;
-import org.spiget.fetcher.request.SpigetResponse;
+import org.spiget.client.SpigetClient;
+import org.spiget.client.SpigetResponse;
 
 import java.io.IOException;
 import java.util.Iterator;

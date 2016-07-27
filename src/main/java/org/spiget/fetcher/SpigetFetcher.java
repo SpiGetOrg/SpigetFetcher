@@ -7,6 +7,9 @@ import org.apache.logging.log4j.Level;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
+import org.spiget.client.SpigetClient;
+import org.spiget.client.SpigetDownload;
+import org.spiget.client.SpigetResponse;
 import org.spiget.data.author.Author;
 import org.spiget.data.author.ListedAuthor;
 import org.spiget.data.resource.ListedResource;
@@ -19,9 +22,6 @@ import org.spiget.data.webhook.event.resource.NewResourceEvent;
 import org.spiget.data.webhook.event.resource.ResourceUpdateEvent;
 import org.spiget.database.DatabaseClient;
 import org.spiget.fetcher.parser.*;
-import org.spiget.fetcher.request.SpigetClient;
-import org.spiget.fetcher.request.SpigetDownload;
-import org.spiget.fetcher.request.SpigetResponse;
 import org.spiget.fetcher.webhook.WebhookExecutor;
 
 import java.io.File;
@@ -46,6 +46,7 @@ public class SpigetFetcher {
 
 	public SpigetFetcher init() throws IOException {
 		config = new JsonParser().parse(new FileReader("config.json")).getAsJsonObject();
+		SpigetClient.config = config;
 		SpigetClient.loadCookiesFromFile();
 		webhookExecutor = new WebhookExecutor();
 		Runtime.getRuntime().addShutdownHook(new Thread() {

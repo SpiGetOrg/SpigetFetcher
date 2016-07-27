@@ -2,14 +2,13 @@ package org.spiget.fetcher.test;
 
 import com.google.gson.JsonObject;
 import org.junit.Test;
+import org.spiget.client.SpigetClient;
 import org.spiget.data.author.ListedAuthor;
 import org.spiget.data.category.ListedCategory;
 import org.spiget.data.resource.ListedResource;
 import org.spiget.data.resource.Resource;
 import org.spiget.data.resource.version.ListedResourceVersion;
-import org.spiget.fetcher.SpigetFetcher;
 import org.spiget.fetcher.parser.ResourcePageParser;
-import org.spiget.fetcher.request.SpigetClient;
 
 import java.io.IOException;
 import java.util.Base64;
@@ -19,9 +18,10 @@ import static org.junit.Assert.*;
 public class RequestTest {
 
 	public RequestTest() {
-		SpigetFetcher.config = new JsonObject();
-		SpigetFetcher.config.addProperty("request.userAgent", "Spiget-v2-Test");
-		SpigetFetcher.config.addProperty("debug.connections", false);
+		SpigetClient.config = new JsonObject();
+		SpigetClient.userAgent = "Spiget-v2-Test";
+		SpigetClient.config.addProperty("request.userAgent", "Spiget-v2-Test");
+		SpigetClient.config.addProperty("debug.connections", false);
 	}
 
 	@Test

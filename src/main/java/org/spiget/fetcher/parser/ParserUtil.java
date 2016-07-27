@@ -3,8 +3,8 @@ package org.spiget.fetcher.parser;
 import lombok.extern.log4j.Log4j2;
 import org.apache.commons.io.IOUtils;
 import org.jsoup.nodes.Element;
-import org.spiget.fetcher.request.SpigetClient;
-import org.spiget.fetcher.request.SpigetDownload;
+import org.spiget.client.SpigetClient;
+import org.spiget.client.SpigetDownload;
 
 import java.io.IOException;
 import java.text.ParseException;
