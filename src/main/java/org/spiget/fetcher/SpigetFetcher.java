@@ -47,6 +47,7 @@ public class SpigetFetcher {
 	public SpigetFetcher init() throws IOException {
 		config = new JsonParser().parse(new FileReader("config.json")).getAsJsonObject();
 		SpigetClient.config = config;
+		SpigetClient.userAgent = config.get("request.userAgent").getAsString();
 		SpigetClient.loadCookiesFromFile();
 		webhookExecutor = new WebhookExecutor();
 		Runtime.getRuntime().addShutdownHook(new Thread() {
