@@ -356,12 +356,6 @@ public class SpigetFetcher {
 				log.log(Level.ERROR, "Webhook-delay interrupted", e);
 			}
 		}
-
-		try {
-			databaseClient.disconnect();
-		} catch (IOException e) {
-			log.log(Level.WARN, "Failed to disconnect from database", e);
-		}
 	}
 
 	File makeDownloadFile(String baseDir, String resource, String type) {
