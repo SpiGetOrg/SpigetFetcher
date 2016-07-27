@@ -8,7 +8,7 @@ import org.spiget.data.category.ListedCategory;
 import org.spiget.data.resource.ListedResource;
 import org.spiget.data.resource.Resource;
 import org.spiget.data.resource.version.ListedResourceVersion;
-import org.spiget.fetcher.parser.ResourcePageParser;
+import org.spiget.parser.ResourcePageParser;
 
 import java.io.IOException;
 import java.util.Base64;

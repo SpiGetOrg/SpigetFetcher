@@ -21,8 +21,8 @@ import org.spiget.data.webhook.event.author.NewAuthorEvent;
 import org.spiget.data.webhook.event.resource.NewResourceEvent;
 import org.spiget.data.webhook.event.resource.ResourceUpdateEvent;
 import org.spiget.database.DatabaseClient;
-import org.spiget.fetcher.parser.*;
 import org.spiget.fetcher.webhook.WebhookExecutor;
+import org.spiget.parser.*;
 
 import java.io.File;
 import java.io.FileOutputStream;
