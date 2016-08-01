@@ -302,7 +302,7 @@ public class SpigetFetcher {
 							if (databaseResource.getUpdateDate() != listedResource.getUpdateDate()) {// There was actually an update
 								existingCount = 0;
 								if (listedResource instanceof Resource) {
-									webhookExecutor.callEvent(new ResourceUpdateEvent((Resource) listedResource));
+									webhookExecutor.callEvent(new ResourceUpdateEvent((Resource) listedResource, listedResource.getVersion().getName()));
 								}
 							} else {
 								existingCount++;
