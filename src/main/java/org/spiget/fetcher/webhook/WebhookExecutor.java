@@ -79,6 +79,7 @@ public class WebhookExecutor {
 	int postData(String webhookId, String url, String eventType, JsonObject data) {
 		try {
 			String dataString = data.toString();
+			dataString = dataString.replace("\"_id\":", "\"id\":");
 			int dataLength = dataString.getBytes("UTF-8").length;
 
 			HttpURLConnection connection = (HttpURLConnection) new URL(url).openConnection();
