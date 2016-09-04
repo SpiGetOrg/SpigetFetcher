@@ -354,6 +354,7 @@ public class SpigetFetcher {
 
 		long end = System.currentTimeMillis();
 		databaseClient.updateStatus("fetch.end", end);
+		databaseClient.updateStatus("fetch.duration", (end - start));
 
 		log.info("Waiting for (" + webhookExecutor.pendingCalls + ") Webhooks to complete...");
 		while (!webhookExecutor.isFinished()) {
