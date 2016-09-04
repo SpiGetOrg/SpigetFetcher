@@ -340,10 +340,16 @@ public class SpigetFetcher {
 					} catch (Throwable throwable) {
 						log.error("Unexpected exception while parsing item #" + itemCounter + " on page " + pageCounter, throwable);
 					}
+
+					if (itemCounter % 10 == 0) {
+						databaseClient.updateSystemStats("fetch.");
+					}
 				}
 			} catch (Throwable throwable) {
 				log.log(Level.ERROR, "Unexpected exception while parsing page #" + pageCounter, throwable);
 			}
+
+			databaseClient.updateSystemStats("fetch.");
 		}
 
 		long end = System.currentTimeMillis();
