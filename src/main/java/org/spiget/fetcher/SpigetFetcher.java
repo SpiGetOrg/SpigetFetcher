@@ -59,6 +59,9 @@ public class SpigetFetcher {
 				} catch (IOException e) {
 					log.warn("Failed to save cookies", e);
 				}
+
+				databaseClient.updateStatus("fetch.end", System.currentTimeMillis());
+
 				try {
 					log.info("Disconnecting database...");
 					databaseClient.disconnect();
