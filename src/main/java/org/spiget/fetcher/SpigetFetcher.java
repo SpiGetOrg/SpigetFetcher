@@ -258,7 +258,7 @@ public class SpigetFetcher {
 									log.error("Unexpected exception while parsing resource reviews for #" + listedResource.getId(), throwable);
 								}
 							}
-							if (!((Resource) listedResource).isExternal()) {
+							if (!((Resource) listedResource).isExternal() && !listedResource.isPremium()) {
 								if (SpigetFetcher.config.get("fetch.resources.download").getAsBoolean()) {
 									String basePath = SpigetFetcher.config.get("fetch.resources.downloadBase").getAsString();
 									if (basePath != null && !basePath.isEmpty()) {
