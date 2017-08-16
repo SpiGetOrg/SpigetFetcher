@@ -3,6 +3,7 @@ package org.spiget.fetcher.test;
 import com.google.gson.JsonObject;
 import org.junit.Test;
 import org.spiget.client.SpigetClient;
+import org.spiget.client.SpigetResponse;
 import org.spiget.data.author.ListedAuthor;
 import org.spiget.data.category.ListedCategory;
 import org.spiget.data.resource.ListedResource;
@@ -19,8 +20,8 @@ public class RequestTest {
 
 	public RequestTest() {
 		SpigetClient.config = new JsonObject();
-		SpigetClient.userAgent = "Spiget-v2-Test";
-		SpigetClient.config.addProperty("request.userAgent", "Spiget-v2-Test");
+		SpigetClient.userAgent = "Spiget-v2-Test GoogleBot";
+		SpigetClient.config.addProperty("request.userAgent", "Spiget-v2-Test GoogleBot");
 		SpigetClient.config.addProperty("debug.connections", false);
 	}
 
@@ -38,6 +39,22 @@ public class RequestTest {
 		assertEquals("SaturationPreview", parsed.getName());
 		assertNotNull(parsed.getDescription());
 		assertTrue(new String(Base64.getDecoder().decode(parsed.getDescription())).startsWith("This plugin shows you the amount of saturation a food item regenerates."));
+	}
+
+	@Test
+	public void premiumResourceRequestParseTest() throws IOException, InterruptedException {
+		ListedResource base = new ListedResource(33956, "StaffMode");//Would be provided by the resource list fetcher
+		base.setCategory(new ListedCategory(20, "Premium"));
+		base.setVersion(new ListedResourceVersion(0, "4.9"));
+		base.setAuthor(new ListedAuthor(113444, "ItzProtomPvP"));
+
+		SpigetResponse response = SpigetClient.get("https://www.spigotmc.org/resources/staffmode.33956/");
+		org.jsoup.nodes.Document document = response.getDocument();
+		Resource parsed = new ResourcePageParser().parse(document, base);
+
+		assertEquals(33956, parsed.getId());
+		assertEquals("StaffMode", parsed.getName());
+		assertNotNull(parsed.getDescription());
 	}
 
 }
