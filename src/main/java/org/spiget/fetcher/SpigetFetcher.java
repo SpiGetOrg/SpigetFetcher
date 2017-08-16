@@ -165,7 +165,7 @@ public class SpigetFetcher {
 								continue;
 							}
 							// Do this inside of here, so we can be sure we actually have a Resource object
-							if (modeResourceVersions) {
+							if (modeResourceVersions && !listedResource.isPremium()) {// TODO: support premium resource versions somehow (can't parse version IDs, since there's now download URL)
 								databaseClient.updateStatus("fetch.page.item.state", "versions");
 								ResourceVersionItemParser resourceVersionItemParser = new ResourceVersionItemParser();
 								try {
