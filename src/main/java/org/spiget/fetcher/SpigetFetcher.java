@@ -165,9 +165,9 @@ public class SpigetFetcher {
 								continue;
 							}
 							// Do this inside of here, so we can be sure we actually have a Resource object
-							if (modeResourceVersions && !listedResource.isPremium()) {// TODO: support premium resource versions somehow (can't parse version IDs, since there's now download URL)
+							if (modeResourceVersions) {
 								databaseClient.updateStatus("fetch.page.item.state", "versions");
-								ResourceVersionItemParser resourceVersionItemParser = new ResourceVersionItemParser();
+								ResourceVersionItemParser resourceVersionItemParser = listedResource.isPremium() ? new PremiumResourceVersionItemParser() : new ResourceVersionItemParser();
 								try {
 									Document versionDocument = SpigetClient.get(SpigetClient.BASE_URL + "resources/" + listedResource.getId() + "/history").getDocument();
 									Element resourceHistory = versionDocument.select("table.resourceHistory").first();
@@ -180,7 +180,7 @@ public class SpigetFetcher {
 											continue;
 										}
 
-										ResourceVersion resourceVersion = resourceVersionItemParser.parse(versionElement);
+										ResourceVersion resourceVersion = resourceVersionItemParser.parse(versionElement, listedResource);
 										((Resource) listedResource).getVersions().add(resourceVersion);
 
 										databaseClient.updateOrInsertVersion(listedResource, resourceVersion);
