@@ -41,11 +41,6 @@ public class SpigetFetcher {
 
 	WebhookExecutor webhookExecutor;
 
-	private boolean modeResources;
-	private boolean modeResourceVersions;
-	private boolean modeResourceUpdates;
-	private boolean modeResourceReviews;
-
 	public SpigetFetcher() {
 	}
 
@@ -112,11 +107,6 @@ public class SpigetFetcher {
 			}
 		}
 
-		modeResources = config.get("fetch.mode.resources").getAsBoolean();
-		modeResourceVersions = config.get("fetch.mode.resource.versions").getAsBoolean();
-		modeResourceUpdates = config.get("fetch.mode.resource.updates").getAsBoolean();
-		modeResourceReviews = config.get("fetch.mode.resource.reviews").getAsBoolean();
-
 		return this;
 	}
 
@@ -125,6 +115,11 @@ public class SpigetFetcher {
 		long start = System.currentTimeMillis();
 		databaseClient.updateStatus("fetch.start", start);
 		databaseClient.updateStatus("fetch.end", 0);
+
+		boolean modeResources = config.get("fetch.mode.resources").getAsBoolean();
+		boolean modeResourceVersions = config.get("fetch.mode.resource.versions").getAsBoolean();
+		boolean modeResourceUpdates = config.get("fetch.mode.resource.updates").getAsBoolean();
+		boolean modeResourceReviews = config.get("fetch.mode.resource.reviews").getAsBoolean();
 
 		int stopOnExisting = config.get("fetch.resources.stopOnExisting").getAsInt();
 		int existingCount = 0;
@@ -161,8 +156,10 @@ public class SpigetFetcher {
 					try {
 						ListedResource listedResource = resourceItemParser.parse(resourceListItem);
 
-						// Update the resource
-						updateResource(listedResource, resourcePageParser);
+						if (modeResources) {
+							// Update the resource
+							updateResource(listedResource, resourcePageParser, modeResourceVersions, modeResourceUpdates, modeResourceReviews);
+						}
 
 						databaseClient.updateStatus("fetch.page.item.state", "database");
 
@@ -238,149 +235,162 @@ public class SpigetFetcher {
 		}
 	}
 
-	private void updateResource(ListedResource listedResource, ResourcePageParser resourcePageParser) throws InterruptedException {
-		if (modeResources) {
-			databaseClient.updateStatus("fetch.page.item.state", "general");
-			try {
-				Document resourceDocument = SpigetClient.get(SpigetClient.BASE_URL + "resources/" + listedResource.getId()).getDocument();
-				listedResource = resourcePageParser.parse(resourceDocument, listedResource);
-			} catch (Throwable throwable) {
-				log.error("Unexpected exception while parsing full resource #" + listedResource.getId(), throwable);
-				return;
-			}
-			// Do this inside of here, so we can be sure we actually have a Resource object
-			if (modeResourceVersions) {
-				databaseClient.updateStatus("fetch.page.item.state", "versions");
-				ResourceVersionItemParser resourceVersionItemParser = listedResource.isPremium() ? new PremiumResourceVersionItemParser() : new ResourceVersionItemParser();
-				try {
-					Document versionDocument = SpigetClient.get(SpigetClient.BASE_URL + "resources/" + listedResource.getId() + "/history").getDocument();
-					Element resourceHistory = versionDocument.select("table.resourceHistory").first();
-					Elements versionElements = resourceHistory.select("tr.dataRow");
-					boolean first = true;
-					for (Element versionElement : versionElements) {
-						if (first) {
-							// The first row is the table header
-							first = false;
-							continue;
-						}
-
-						ResourceVersion resourceVersion = resourceVersionItemParser.parse(versionElement, listedResource);
-						((Resource) listedResource).getVersions().add(resourceVersion);
-
-						databaseClient.updateOrInsertVersion(listedResource, resourceVersion);
-					}
-					listedResource.setVersion(((Resource) listedResource).getVersions().get(0));
-				} catch (Throwable throwable) {
-					log.error("Unexpected exception while parsing resource versions for #" + listedResource.getId(), throwable);
-				}
-			}
-
-			if (modeResourceUpdates) {
-				databaseClient.updateStatus("fetch.page.item.state", "updates");
-				ResourceUpdateItemParer resourceUpdateItemParer = new ResourceUpdateItemParer();
-				ResourceUpdateParser resourceUpdateParser = new ResourceUpdateParser();
-				try {
-					int pageCount = Paginator.parseDocumentPageCount(SpigetClient.get(SpigetClient.BASE_URL + "resources/" + listedResource.getId() + "/updates").getDocument());
-					int maxPage = Math.min(pageCount, config.get("fetch.resources.updates.maxPage").getAsInt());
-					Paginator resourceUpdatesPaginator = new Paginator(SpigetClient.BASE_URL + "resources/" + listedResource.getId() + "/updates?page=%s", maxPage, false);
-					for (Document updateDocument : resourceUpdatesPaginator) {
-						Element resourceUpdatesTab = updateDocument.select("li.resourceTabUpdates").first();
-						if (resourceUpdatesTab == null || !resourceUpdatesTab.hasClass("active")) {
-							// We're not on the updates page, which probably means the resource hasn't been updated yet.
-							break;
-						}
-
-						Elements resourceUpdateElements = updateDocument.select("li.resourceUpdate");
-						for (Element resourceUpdateElement : resourceUpdateElements) {
-							ResourceUpdate resourceUpdate = resourceUpdateItemParer.parse(resourceUpdateElement);
-							Document resourceUpdateDocument = SpigetClient.get(SpigetClient.BASE_URL + "resources/" + listedResource.getId() + "/update?update=" + resourceUpdate.getId()).getDocument();
-							resourceUpdate = resourceUpdateParser.parse(resourceUpdateDocument, resourceUpdate);
-
-							Document resourceUpdateLikesDocument = SpigetClient.get(SpigetClient.BASE_URL + "resources/" + listedResource.getId() + "/update-likes?resource_update_id=" + resourceUpdate.getId()).getDocument();
-							Elements likesElements = resourceUpdateLikesDocument.select("li.memberListItem");
-							resourceUpdate.setLikes(likesElements.size());
-
-							((Resource) listedResource).getUpdates().add(resourceUpdate);
-							((Resource) listedResource).setLikes(((Resource) listedResource).getLikes() + resourceUpdate.getLikes());
-
-							databaseClient.updateOrInsertUpdate(listedResource, resourceUpdate);
-						}
-					}
-				} catch (Throwable throwable) {
-					log.error("Unexpected exception while parsing resource updates for #" + listedResource.getId(), throwable);
-				}
-			}
-			if (modeResourceReviews) {
-				databaseClient.updateStatus("fetch.page.item.state", "reviews");
-				ResourceReviewItemParser reviewItemParser = new ResourceReviewItemParser();
-				try {
-					int pageCount = Paginator.parseDocumentPageCount(SpigetClient.get(SpigetClient.BASE_URL + "resources/" + listedResource.getId() + "/reviews").getDocument());
-					int maxPage = Math.min(pageCount, config.get("fetch.resources.reviews.maxPage").getAsInt());
-					Paginator resourceReviewsPaginator = new Paginator(SpigetClient.BASE_URL + "resources/" + listedResource.getId() + "/reviews?page=%s", maxPage, false);
-					for (Document reviewDocument : resourceReviewsPaginator) {
-						Element resourceReviewsTab = reviewDocument.select("li.resourceTabReviews").first();
-						if (resourceReviewsTab == null || !resourceReviewsTab.hasClass("active")) {
-							// We're not on the reviews page, which probably means the resource hasn't been reviewed yet.
-							break;
-						}
-
-						Elements reviewElements = reviewDocument.select("li.review");
-						for (Element reviewElement : reviewElements) {
-							ResourceReview review = reviewItemParser.parse(reviewElement);
-
-							((Resource) listedResource).getReviews().add(review);
-
-							Author databaseReviewAuthor = databaseClient.getAuthor(review.getAuthor().getId());
-							if (databaseReviewAuthor == null) {// Only insert if the document doesn't exist, so we don't accidentally overwrite existing data
-								databaseClient.insertAuthor(review.getAuthor());
-							}
-
-							databaseClient.updateOrInsertReview(listedResource, review);
-						}
-					}
-				} catch (Throwable throwable) {
-					log.error("Unexpected exception while parsing resource reviews for #" + listedResource.getId(), throwable);
-				}
-			}
-			if (!((Resource) listedResource).isExternal() && !listedResource.isPremium()) {
-				if (SpigetFetcher.config.get("fetch.resources.download").getAsBoolean()) {
-					String basePath = SpigetFetcher.config.get("fetch.resources.downloadBase").getAsString();
-					if (basePath != null && !basePath.isEmpty()) {
-						databaseClient.updateStatus("fetch.page.item.state", "download");
-						log.info("Downloading #" + listedResource.getId());
-						try {
-							File outputFile = makeDownloadFile(basePath, String.valueOf(listedResource.getId()), ((Resource) listedResource).getFile().getType());
-							if (outputFile.exists()) {
-								log.debug("Overwriting existing file");
-							} else {
-								outputFile.createNewFile();
-
-								String os = System.getProperty("os.name").toLowerCase();
-								if (os.contains("nix") || os.contains("nux") || os.contains("aix")) {
-									Runtime.getRuntime().exec("chmod 777 " + outputFile);
-								}
-
-								outputFile.setReadable(true);
-								outputFile.setWritable(true);
-							}
-
-							log.info("Downloading '" + ((Resource) listedResource).getFile().getUrl() + "' to '" + outputFile + "'...");
-							SpigetDownload download = SpigetClient.download(SpigetClient.BASE_URL + ((Resource) listedResource).getFile().getUrl());
-							ReadableByteChannel channel = Channels.newChannel(download.getInputStream());
-							FileOutputStream out = new FileOutputStream(outputFile);
-							out.getChannel().transferFrom(channel, 0, 10000000L/*10MB, should be enough*/);
-							out.flush();
-							out.close();
-						} catch (IOException e) {
-							log.warn("Download for resource #" + listedResource.getId() + " failed", e);
-						}
-					}
-				}
+	private void updateResource(ListedResource listedResource, ResourcePageParser resourcePageParser, boolean modeResourceVersions, boolean modeResourceUpdates, boolean modeResourceReviews) throws InterruptedException {
+		databaseClient.updateStatus("fetch.page.item.state", "general");
+		try {
+			Document resourceDocument = SpigetClient.get(SpigetClient.BASE_URL + "resources/" + listedResource.getId()).getDocument();
+			listedResource = resourcePageParser.parse(resourceDocument, listedResource);
+		} catch (Throwable throwable) {
+			log.error("Unexpected exception while parsing full resource #" + listedResource.getId(), throwable);
+			return;
+		}
+		// Do this inside of here, so we can be sure we actually have a Resource object
+		if (modeResourceVersions) {
+			updateResourceVersions(listedResource);
+		}
+		if (modeResourceUpdates) {
+			updatedResourceUpdates(listedResource);
+		}
+		if (modeResourceReviews) {
+			updateResourceReviews(listedResource);
+		}
+		if (!((Resource) listedResource).isExternal() && !listedResource.isPremium()) {
+			if (SpigetFetcher.config.get("fetch.resources.download").getAsBoolean()) {
+				downloadResource(listedResource);
 			}
 		}
 	}
 
-	File makeDownloadFile(String baseDir, String resource, String type) {
+	private void updateResourceVersions(ListedResource listedResource) {
+		databaseClient.updateStatus("fetch.page.item.state", "versions");
+		ResourceVersionItemParser resourceVersionItemParser = listedResource.isPremium() ? new PremiumResourceVersionItemParser() : new ResourceVersionItemParser();
+		try {
+			Document versionDocument = SpigetClient.get(SpigetClient.BASE_URL + "resources/" + listedResource.getId() + "/history").getDocument();
+			Element resourceHistory = versionDocument.select("table.resourceHistory").first();
+			Elements versionElements = resourceHistory.select("tr.dataRow");
+			boolean first = true;
+			for (Element versionElement : versionElements) {
+				if (first) {
+					// The first row is the table header
+					first = false;
+					continue;
+				}
+
+				ResourceVersion resourceVersion = resourceVersionItemParser.parse(versionElement, listedResource);
+				((Resource) listedResource).getVersions().add(resourceVersion);
+
+				databaseClient.updateOrInsertVersion(listedResource, resourceVersion);
+			}
+			listedResource.setVersion(((Resource) listedResource).getVersions().get(0));
+		} catch (Throwable throwable) {
+			log.error("Unexpected exception while parsing resource versions for #" + listedResource.getId(), throwable);
+		}
+	}
+
+	private void updatedResourceUpdates(ListedResource listedResource) {
+		databaseClient.updateStatus("fetch.page.item.state", "updates");
+		ResourceUpdateItemParer resourceUpdateItemParer = new ResourceUpdateItemParer();
+		ResourceUpdateParser resourceUpdateParser = new ResourceUpdateParser();
+		try {
+			int pageCount = Paginator.parseDocumentPageCount(SpigetClient.get(SpigetClient.BASE_URL + "resources/" + listedResource.getId() + "/updates").getDocument());
+			int maxPage = Math.min(pageCount, config.get("fetch.resources.updates.maxPage").getAsInt());
+			Paginator resourceUpdatesPaginator = new Paginator(SpigetClient.BASE_URL + "resources/" + listedResource.getId() + "/updates?page=%s", maxPage, false);
+			for (Document updateDocument : resourceUpdatesPaginator) {
+				Element resourceUpdatesTab = updateDocument.select("li.resourceTabUpdates").first();
+				if (resourceUpdatesTab == null || !resourceUpdatesTab.hasClass("active")) {
+					// We're not on the updates page, which probably means the resource hasn't been updated yet.
+					break;
+				}
+
+				Elements resourceUpdateElements = updateDocument.select("li.resourceUpdate");
+				for (Element resourceUpdateElement : resourceUpdateElements) {
+					ResourceUpdate resourceUpdate = resourceUpdateItemParer.parse(resourceUpdateElement);
+					Document resourceUpdateDocument = SpigetClient.get(SpigetClient.BASE_URL + "resources/" + listedResource.getId() + "/update?update=" + resourceUpdate.getId()).getDocument();
+					resourceUpdate = resourceUpdateParser.parse(resourceUpdateDocument, resourceUpdate);
+
+					Document resourceUpdateLikesDocument = SpigetClient.get(SpigetClient.BASE_URL + "resources/" + listedResource.getId() + "/update-likes?resource_update_id=" + resourceUpdate.getId()).getDocument();
+					Elements likesElements = resourceUpdateLikesDocument.select("li.memberListItem");
+					resourceUpdate.setLikes(likesElements.size());
+
+					((Resource) listedResource).getUpdates().add(resourceUpdate);
+					((Resource) listedResource).setLikes(((Resource) listedResource).getLikes() + resourceUpdate.getLikes());
+
+					databaseClient.updateOrInsertUpdate(listedResource, resourceUpdate);
+				}
+			}
+		} catch (Throwable throwable) {
+			log.error("Unexpected exception while parsing resource updates for #" + listedResource.getId(), throwable);
+		}
+	}
+
+	private void updateResourceReviews(ListedResource listedResource) {
+		databaseClient.updateStatus("fetch.page.item.state", "reviews");
+		ResourceReviewItemParser reviewItemParser = new ResourceReviewItemParser();
+		try {
+			int pageCount = Paginator.parseDocumentPageCount(SpigetClient.get(SpigetClient.BASE_URL + "resources/" + listedResource.getId() + "/reviews").getDocument());
+			int maxPage = Math.min(pageCount, config.get("fetch.resources.reviews.maxPage").getAsInt());
+			Paginator resourceReviewsPaginator = new Paginator(SpigetClient.BASE_URL + "resources/" + listedResource.getId() + "/reviews?page=%s", maxPage, false);
+			for (Document reviewDocument : resourceReviewsPaginator) {
+				Element resourceReviewsTab = reviewDocument.select("li.resourceTabReviews").first();
+				if (resourceReviewsTab == null || !resourceReviewsTab.hasClass("active")) {
+					// We're not on the reviews page, which probably means the resource hasn't been reviewed yet.
+					break;
+				}
+
+				Elements reviewElements = reviewDocument.select("li.review");
+				for (Element reviewElement : reviewElements) {
+					ResourceReview review = reviewItemParser.parse(reviewElement);
+
+					((Resource) listedResource).getReviews().add(review);
+
+					Author databaseReviewAuthor = databaseClient.getAuthor(review.getAuthor().getId());
+					if (databaseReviewAuthor == null) {// Only insert if the document doesn't exist, so we don't accidentally overwrite existing data
+						databaseClient.insertAuthor(review.getAuthor());
+					}
+
+					databaseClient.updateOrInsertReview(listedResource, review);
+				}
+			}
+		} catch (Throwable throwable) {
+			log.error("Unexpected exception while parsing resource reviews for #" + listedResource.getId(), throwable);
+		}
+	}
+
+	private void downloadResource(ListedResource listedResource) throws InterruptedException {
+		String basePath = SpigetFetcher.config.get("fetch.resources.downloadBase").getAsString();
+		if (basePath != null && !basePath.isEmpty()) {
+			databaseClient.updateStatus("fetch.page.item.state", "download");
+			log.info("Downloading #" + listedResource.getId());
+			try {
+				File outputFile = makeDownloadFile(basePath, String.valueOf(listedResource.getId()), ((Resource) listedResource).getFile().getType());
+				if (outputFile.exists()) {
+					log.debug("Overwriting existing file");
+				} else {
+					outputFile.createNewFile();
+
+					String os = System.getProperty("os.name").toLowerCase();
+					if (os.contains("nix") || os.contains("nux") || os.contains("aix")) {
+						Runtime.getRuntime().exec("chmod 777 " + outputFile);
+					}
+
+					outputFile.setReadable(true);
+					outputFile.setWritable(true);
+				}
+
+				log.info("Downloading '" + ((Resource) listedResource).getFile().getUrl() + "' to '" + outputFile + "'...");
+				SpigetDownload download = SpigetClient.download(SpigetClient.BASE_URL + ((Resource) listedResource).getFile().getUrl());
+				ReadableByteChannel channel = Channels.newChannel(download.getInputStream());
+				FileOutputStream out = new FileOutputStream(outputFile);
+				out.getChannel().transferFrom(channel, 0, 10000000L/*10MB, should be enough*/);
+				out.flush();
+				out.close();
+			} catch (IOException e) {
+				log.warn("Download for resource #" + listedResource.getId() + " failed", e);
+			}
+		}
+	}
+
+	private File makeDownloadFile(String baseDir, String resource, String type) {
 		String[] split = resource.split("");
 		if (split.length == 0) {
 			log.warn("Invalid resource ID! split.length == 0");
