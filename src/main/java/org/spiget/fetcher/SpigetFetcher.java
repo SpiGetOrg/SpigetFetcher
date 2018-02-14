@@ -235,7 +235,7 @@ public class SpigetFetcher {
 				if (resource != null) {
 					try {
 						resource = updateResource(resource, resourcePageParser);
-						updateResourceExtras(resource, request.versions, request.updates, request.reviews, false);
+						updateResourceExtras(resource, request.isVersions(), request.isUpdates(), request.isReviews(), false);
 
 						log.info("Updating existing resource #" + resource.getId());
 						databaseClient.updateResource(resource);
@@ -310,6 +310,7 @@ public class SpigetFetcher {
 
 				ResourceVersion resourceVersion = resourceVersionItemParser.parse(versionElement, resource);
 				resource.getVersions().add(resourceVersion);
+				resourceVersion.setResource(resource.getId());
 
 				databaseClient.updateOrInsertVersion(resource, resourceVersion);
 			}
@@ -347,6 +348,8 @@ public class SpigetFetcher {
 					resource.getUpdates().add(resourceUpdate);
 					resource.setLikes(resource.getLikes() + resourceUpdate.getLikes());
 
+					resourceUpdate.setResource(resource.getId());
+
 					databaseClient.updateOrInsertUpdate(resource, resourceUpdate);
 				}
 			}
@@ -374,6 +377,7 @@ public class SpigetFetcher {
 					ResourceReview review = reviewItemParser.parse(reviewElement);
 
 					resource.getReviews().add(review);
+					review.setResource(resource.getId());
 
 					Author databaseReviewAuthor = databaseClient.getAuthor(review.getAuthor().getId());
 					if (databaseReviewAuthor == null) {// Only insert if the document doesn't exist, so we don't accidentally overwrite existing data
@@ -394,7 +398,7 @@ public class SpigetFetcher {
 			databaseClient.updateStatus("fetch.page.item.state", "download");
 			log.info("Downloading #" + resource.getId());
 			try {
-				File outputFile = makeDownloadFile(basePath, String.valueOf(resource.getId()), ((Resource) resource).getFile().getType());
+				File outputFile = makeDownloadFile(basePath, String.valueOf(resource.getId()), resource.getFile().getType());
 				if (outputFile.exists()) {
 					log.debug("Overwriting existing file");
 				} else {
@@ -409,7 +413,7 @@ public class SpigetFetcher {
 					outputFile.setWritable(true);
 				}
 
-				log.info("Downloading '" + ((Resource) resource).getFile().getUrl() + "' to '" + outputFile + "'...");
+				log.info("Downloading '" + resource.getFile().getUrl() + "' to '" + outputFile + "'...");
 				SpigetDownload download = SpigetClient.download(SpigetClient.BASE_URL + resource.getFile().getUrl());
 				ReadableByteChannel channel = Channels.newChannel(download.getInputStream());
 				FileOutputStream out = new FileOutputStream(outputFile);
