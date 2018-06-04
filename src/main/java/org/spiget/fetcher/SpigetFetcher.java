@@ -228,13 +228,21 @@ public class SpigetFetcher {
 		Set<UpdateRequest> updateRequests = databaseClient.getUpdateRequests();
 		System.out.println(updateRequests);
 		if (updateRequests != null && !updateRequests.isEmpty()) {
-			log.log(Level.INFO, "Fetching (" + updateRequests.size() + ") resources with requested update...");
+			int updateCount = updateRequests.size();
+			long updateStart = System.currentTimeMillis();
+			log.log(Level.INFO, "Fetching (" + updateCount + ") resources with requested update...");
 			ResourcePageParser resourcePageParser = new ResourcePageParser();
 			for (UpdateRequest request : updateRequests) {
 				Resource resource = databaseClient.getResource(request.getRequestedId());
 				if (resource != null) {
 					try {
 						resource = updateResource(resource, resourcePageParser);
+						if (resource == null) {
+							log.log(Level.INFO, "Deleting resource #" + request.getRequestedId() + " since it has likely been deleted.");
+							databaseClient.deleteResource(request.getRequestedId());
+							databaseClient.deleteUpdateRequest(request);
+							continue;
+						}
 						updateResourceExtras(resource, request.isVersions(), request.isUpdates(), request.isReviews(), false);
 
 						log.info("Updating existing resource #" + resource.getId());
@@ -246,7 +254,7 @@ public class SpigetFetcher {
 					}
 				}
 			}
-			log.log(Level.INFO, "Finished requested updates");
+			log.log(Level.INFO, "Finished requested updates. Took " + (((double) System.currentTimeMillis() - updateStart) / 1000 / 60) + " minutes to update " + updateCount + " resources.");
 		}
 
 		long end = System.currentTimeMillis();
@@ -266,7 +274,12 @@ public class SpigetFetcher {
 	private Resource updateResource(ListedResource listedResource, ResourcePageParser resourcePageParser) {
 		databaseClient.updateStatus("fetch.page.item.state", "general");
 		try {
-			Document resourceDocument = SpigetClient.get(SpigetClient.BASE_URL + "resources/" + listedResource.getId()).getDocument();
+			SpigetResponse response = SpigetClient.get(SpigetClient.BASE_URL + "resources/" + listedResource.getId());
+			if (response.getCode() != 200) {// This SHOULD only happen if this method is called via the update requests part
+				log.error("Failed to update resource #" + listedResource.getId() + ": page returned non-OK status code (" + response.getCode() + ")");
+				return null;
+			}
+			Document resourceDocument = response.getDocument();
 			return resourcePageParser.parse(resourceDocument, listedResource);
 		} catch (Throwable throwable) {
 			log.error("Unexpected exception while parsing full resource #" + listedResource.getId(), throwable);
@@ -285,7 +298,7 @@ public class SpigetFetcher {
 		if (modeResourceReviews) {
 			updateResourceReviews(resource);
 		}
-		if (!resource.isExternal() && !resource.isPremium()) {
+		if (modeResourceDownload && !resource.isExternal() && !resource.isPremium()) {
 			if (SpigetFetcher.config.get("fetch.resources.download").getAsBoolean()) {
 				downloadResource(resource);
 			}

@@ -6,6 +6,7 @@ public class Main {
 		SpigetFetcher spigetFetcher = new SpigetFetcher();
 		spigetFetcher.init();
 		spigetFetcher.fetch();
+//		spigetFetcher.patchVersions();
 	}
 
 }
