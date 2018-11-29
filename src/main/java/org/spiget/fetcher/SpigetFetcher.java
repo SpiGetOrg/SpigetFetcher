@@ -149,6 +149,11 @@ public class SpigetFetcher {
 				ResourceListItemParser resourceItemParser = new ResourceListItemParser();
 				ResourcePageParser resourcePageParser = new ResourcePageParser();
 				Elements resourceListItems = document.select("li.resourceListItem");
+				if(resourceListItems.isEmpty()){
+					log.warn("Page has " + resourceListItems.size() + " resource items");
+				}else {
+					log.debug("Page has " + resourceListItems.size() + " resource items");
+				}
 				int itemCounter = 0;
 				for (Element resourceListItem : resourceListItems) {
 					if (fetchStopped) { break; }
