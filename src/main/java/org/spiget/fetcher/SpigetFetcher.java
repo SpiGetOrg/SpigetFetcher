@@ -7,6 +7,7 @@ import org.apache.logging.log4j.Level;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
+import org.spiget.client.HtmlUnitClient;
 import org.spiget.client.SpigetClient;
 import org.spiget.client.SpigetDownload;
 import org.spiget.client.SpigetResponse;
@@ -227,6 +228,10 @@ public class SpigetFetcher {
 			}
 
 			databaseClient.updateSystemStats("fetch.");
+
+			if (pageCounter % 10 == 0) {
+				HtmlUnitClient.disposeClient();
+			}
 		}
 		log.log(Level.INFO, "Finished live resource fetch");
 
