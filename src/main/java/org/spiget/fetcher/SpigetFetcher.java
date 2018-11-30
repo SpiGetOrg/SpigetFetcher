@@ -229,7 +229,7 @@ public class SpigetFetcher {
 
 			databaseClient.updateSystemStats("fetch.");
 
-			if (pageCounter % 10 == 0) {
+			if (pageCounter % 2 == 0) {
 				HtmlUnitClient.disposeClient();
 			}
 		}
