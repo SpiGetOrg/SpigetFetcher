@@ -101,7 +101,15 @@ public class SpigetFetcher {
 			long testStart = System.currentTimeMillis();
 			try {
 				SpigetResponse response = SpigetClient.get(SpigetClient.BASE_URL);
-				log.info("Connection successful (" + (System.currentTimeMillis() - testStart) + "ms)");
+				int code = response.getCode();
+				if (code >= 200 && code < 400) {
+					log.info("Connection successful (" + (System.currentTimeMillis() - testStart) + "ms)");
+				} else {
+					log.fatal("Connection failed with code " + code + " after " + (System.currentTimeMillis() - testStart) + "ms");
+					log.fatal("Aborting.");
+					System.exit(-1);
+					return null;
+				}
 			} catch (Exception e) {
 				log.fatal("Connection failed after " + (System.currentTimeMillis() - testStart) + "ms", e);
 				log.fatal("Aborting.");
@@ -150,9 +158,9 @@ public class SpigetFetcher {
 				ResourceListItemParser resourceItemParser = new ResourceListItemParser();
 				ResourcePageParser resourcePageParser = new ResourcePageParser();
 				Elements resourceListItems = document.select("li.resourceListItem");
-				if(resourceListItems.isEmpty()){
+				if (resourceListItems.isEmpty()) {
 					log.warn("Page has " + resourceListItems.size() + " resource items");
-				}else {
+				} else {
 					log.debug("Page has " + resourceListItems.size() + " resource items");
 				}
 				int itemCounter = 0;
