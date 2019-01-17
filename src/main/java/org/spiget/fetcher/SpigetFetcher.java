@@ -446,11 +446,15 @@ public class SpigetFetcher {
 
 				log.info("Downloading '" + resource.getFile().getUrl() + "' to '" + outputFile + "'...");
 				SpigetDownload download = SpigetClient.download(SpigetClient.BASE_URL + resource.getFile().getUrl());
-				ReadableByteChannel channel = Channels.newChannel(download.getInputStream());
-				FileOutputStream out = new FileOutputStream(outputFile);
-				out.getChannel().transferFrom(channel, 0, 10000000L/*10MB, should be enough*/);
-				out.flush();
-				out.close();
+				if(download.isAvailable()) {
+					ReadableByteChannel channel = Channels.newChannel(download.getInputStream());
+					FileOutputStream out = new FileOutputStream(outputFile);
+					out.getChannel().transferFrom(channel, 0, 10000000L/*10MB, should be enough*/);
+					out.flush();
+					out.close();
+				} else {
+					log.warn("Download is not available (probably blocked by CloudFlare)");
+				}
 			} catch (IOException e) {
 				log.warn("Download for resource #" + resource.getId() + " failed", e);
 			}
