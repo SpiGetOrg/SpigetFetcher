@@ -100,13 +100,14 @@ public class SpigetFetcher {
 			log.info("Testing SpigotMC connection...");
 			long testStart = System.currentTimeMillis();
 			try {
-				SpigetResponse response = SpigetClient.get(SpigetClient.BASE_URL);
+				SpigetResponse response = SpigetClient.get("https://www.spigotmc.org");
 				int code = response.getCode();
 				if (code >= 200 && code < 400) {
 					log.info("Connection successful (" + (System.currentTimeMillis() - testStart) + "ms)");
 				} else {
 					log.fatal("Connection failed with code " + code + " after " + (System.currentTimeMillis() - testStart) + "ms");
 					log.fatal("Aborting.");
+					log.info(response.getDocument().body());
 					System.exit(-1);
 					return null;
 				}
