@@ -52,6 +52,7 @@ public class SpigetFetcher {
 		SpigetClient.config = config;
 		SpigetClient.userAgent = config.get("request.userAgent").getAsString();
 		SpigetClient.loadCookiesFromFile();
+
 		webhookExecutor = new WebhookExecutor();
 		Runtime.getRuntime().addShutdownHook(new Thread() {
 			@Override
@@ -155,6 +156,7 @@ public class SpigetFetcher {
 					log.info("Skipping page #" + pageCounter + " (Offset: " + pageOffset + ")");
 					continue;
 				}
+				log.debug(document.body());
 
 				ResourceListItemParser resourceItemParser = new ResourceListItemParser();
 				ResourcePageParser resourcePageParser = new ResourcePageParser();

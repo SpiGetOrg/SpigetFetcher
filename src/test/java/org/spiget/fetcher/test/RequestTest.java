@@ -20,8 +20,8 @@ public class RequestTest {
 
 	public RequestTest() {
 		SpigetClient.config = new JsonObject();
-		SpigetClient.userAgent = "Spiget-v2-Test GoogleBot";
-		SpigetClient.config.addProperty("request.userAgent", "Spiget-v2-Test GoogleBot");
+		SpigetClient.userAgent = "TotallyNot5p1g3t";
+		SpigetClient.config.addProperty("request.userAgent", "TotallyNot5p1g3t");
 		SpigetClient.config.addProperty("debug.connections", false);
 	}
 
@@ -33,6 +33,7 @@ public class RequestTest {
 		base.setAuthor(new ListedAuthor(6643, "inventivetalent"));
 
 		org.jsoup.nodes.Document document = SpigetClient.get("https://www.spigotmc.org/resources/saturationpreview.21779/").getDocument();
+		System.out.println(document.body());
 		Resource parsed = new ResourcePageParser().parse(document, base);
 
 		assertEquals(21779, parsed.getId());
@@ -50,6 +51,7 @@ public class RequestTest {
 
 		SpigetResponse response = SpigetClient.get("https://www.spigotmc.org/resources/staffmode.33956/");
 		org.jsoup.nodes.Document document = response.getDocument();
+		System.out.println(document.body());
 		Resource parsed = new ResourcePageParser().parse(document, base);
 
 		assertEquals(33956, parsed.getId());
