@@ -33,6 +33,7 @@ import java.io.IOException;
 import java.nio.channels.Channels;
 import java.nio.channels.ReadableByteChannel;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Set;
 
 @Log4j2
@@ -200,7 +201,12 @@ public class SpigetFetcher {
 							if (databaseResource.getUpdateDate() != listedResource.getUpdateDate()) {// There was actually an update
 								existingCount = 0;
 								if (listedResource instanceof Resource) {
-									webhookExecutor.callEvent(new ResourceUpdateEvent((Resource) listedResource, listedResource.getVersion().getName()));
+									int updateId = -1;
+									List<ResourceUpdate> updates = ((Resource)listedResource).getUpdates();
+									if (updates != null && !updates.isEmpty()) {
+										updateId = updates.get(0).getId();
+									}
+									webhookExecutor.callEvent(new ResourceUpdateEvent((Resource) listedResource, listedResource.getVersion().getName(), updateId));
 								}
 							} else {
 								existingCount++;
