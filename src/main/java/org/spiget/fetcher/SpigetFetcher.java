@@ -92,6 +92,9 @@ public class SpigetFetcher {
 			} catch (Exception e) {
 				log.fatal("Connection failed after " + (System.currentTimeMillis() - testStart) + "ms", e);
 				log.fatal("Aborting.");
+
+				Discord.postMessage("⚠️Database connection failed with exception!", config);
+
 				System.exit(-1);
 				return null;
 			}
@@ -109,12 +112,18 @@ public class SpigetFetcher {
 					log.fatal("Connection failed with code " + code + " after " + (System.currentTimeMillis() - testStart) + "ms");
 					log.fatal("Aborting.");
 					log.info(response.getDocument().body());
+
+					Discord.postMessage("⚠SpigotMC connection failed with code " + code + "!", config);
+
 					System.exit(-1);
 					return null;
 				}
 			} catch (Exception e) {
 				log.fatal("Connection failed after " + (System.currentTimeMillis() - testStart) + "ms", e);
 				log.fatal("Aborting.");
+
+				Discord.postMessage("⚠SpigotMC connection failed with exception!", config);
+
 				System.exit(-1);
 				return null;
 			}
@@ -156,13 +165,13 @@ public class SpigetFetcher {
 					log.info("Skipping page #" + pageCounter + " (Offset: " + pageOffset + ")");
 					continue;
 				}
-				log.debug(document.body());
 
 				ResourceListItemParser resourceItemParser = new ResourceListItemParser();
 				ResourcePageParser resourcePageParser = new ResourcePageParser();
 				Elements resourceListItems = document.select("li.resourceListItem");
 				if (resourceListItems.isEmpty()) {
 					log.warn("Page has " + resourceListItems.size() + " resource items");
+					Discord.postMessage("⚠Resource page has no resource items!", config);
 				} else {
 					log.debug("Page has " + resourceListItems.size() + " resource items");
 				}
@@ -449,7 +458,7 @@ public class SpigetFetcher {
 
 				log.info("Downloading '" + resource.getFile().getUrl() + "' to '" + outputFile + "'...");
 				SpigetDownload download = SpigetClient.download(SpigetClient.BASE_URL + resource.getFile().getUrl());
-				if(download.isAvailable()) {
+				if (download.isAvailable()) {
 					ReadableByteChannel channel = Channels.newChannel(download.getInputStream());
 					FileOutputStream out = new FileOutputStream(outputFile);
 					out.getChannel().transferFrom(channel, 0, 10000000L/*10MB, should be enough*/);
