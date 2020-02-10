@@ -277,8 +277,10 @@ public class SpigetFetcher {
 				try {
 					resource = updateResource(resource, resourcePageParser);
 					if (resource == null) {
-						log.log(Level.INFO, "Deleting resource #" + request.getRequestedId() + " since it has likely been deleted.");
-						databaseClient.deleteResource(request.getRequestedId());
+						if(request.isDelete()) {
+							log.log(Level.INFO, "Deleting resource #" + request.getRequestedId() + " since it has likely been deleted.");
+							databaseClient.deleteResource(request.getRequestedId());
+						}
 						databaseClient.deleteUpdateRequest(request);
 						continue;
 					}
