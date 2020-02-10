@@ -271,6 +271,9 @@ public class SpigetFetcher {
 			for (UpdateRequest request : updateRequests) {
 				Resource resource = databaseClient.getResource(request.getRequestedId());
 				boolean existed = resource!=null;
+				if (resource == null) {
+					resource = new Resource(request.getRequestedId());
+				}
 				try {
 					resource = updateResource(resource, resourcePageParser);
 					if (resource == null) {
