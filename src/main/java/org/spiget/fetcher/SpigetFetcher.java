@@ -188,62 +188,64 @@ public class SpigetFetcher {
 					try {
 						ListedResource listedResource = resourceItemParser.parse(resourceListItem);
 
-						if (modeResources) {
-							// Update the resource
-							listedResource = updateResource(listedResource, resourcePageParser);
-							listedResource = updateResourceExtras((Resource) listedResource, modeResourceVersions, modeResourceUpdates, modeResourceReviews, true);
-						}
+						if (listedResource != null) {
+							if (modeResources) {
+								// Update the resource
+								listedResource = updateResource(listedResource, resourcePageParser);
+								listedResource = updateResourceExtras((Resource) listedResource, modeResourceVersions, modeResourceUpdates, modeResourceReviews, true);
+							}
 
-						databaseClient.updateStatus("fetch.page.item.state", "database");
+							databaseClient.updateStatus("fetch.page.item.state", "database");
 
-						ListedResource databaseResource = databaseClient.getResource(listedResource.getId());
-						if (databaseResource != null) {
-							log.info("Updating existing resource #" + listedResource.getId());
-							databaseClient.updateResource(listedResource);
+							ListedResource databaseResource = databaseClient.getResource(listedResource.getId());
+							if (databaseResource != null) {
+								log.info("Updating existing resource #" + listedResource.getId());
+								databaseClient.updateResource(listedResource);
 
-							if (databaseResource.getUpdateDate() != listedResource.getUpdateDate()) {// There was actually an update
-								existingCount = 0;
-								if (listedResource instanceof Resource) {
-									int updateId = -1;
-									List<ResourceUpdate> updates = ((Resource) listedResource).getUpdates();
-									if (updates != null && !updates.isEmpty()) {
-										updateId = updates.get(0).getId();
+								if (databaseResource.getUpdateDate() != listedResource.getUpdateDate()) {// There was actually an update
+									existingCount = 0;
+									if (listedResource instanceof Resource) {
+										int updateId = -1;
+										List<ResourceUpdate> updates = ((Resource) listedResource).getUpdates();
+										if (updates != null && !updates.isEmpty()) {
+											updateId = updates.get(0).getId();
+										}
+										webhookExecutor.callEvent(new ResourceUpdateEvent((Resource) listedResource, listedResource.getVersion().getName(), updateId));
 									}
-									webhookExecutor.callEvent(new ResourceUpdateEvent((Resource) listedResource, listedResource.getVersion().getName(), updateId));
+								} else {
+									existingCount++;
+									// If we stop on inverted, it would stop immediately
+									if (!inverted && stopOnExisting != -1 && existingCount > stopOnExisting) {
+										log.info("Last new resource found (" + pageCounter + "." + itemCounter + ") #" + existingCount + ". Stopping.");
+										fetchStopped = true;
+										break;
+									}
 								}
 							} else {
-								existingCount++;
-								// If we stop on inverted, it would stop immediately
-								if (!inverted && stopOnExisting != -1 && existingCount > stopOnExisting) {
-									log.info("Last new resource found (" + pageCounter + "." + itemCounter + ") #" + existingCount + ". Stopping.");
-									fetchStopped = true;
-									break;
+								existingCount = 0;
+								log.info("Inserting new resource #" + listedResource.getId());
+								databaseClient.insertResource(listedResource);
+
+								if (listedResource instanceof Resource) {
+									webhookExecutor.callEvent(new NewResourceEvent((Resource) listedResource));
 								}
 							}
-						} else {
-							existingCount = 0;
-							log.info("Inserting new resource #" + listedResource.getId());
-							databaseClient.insertResource(listedResource);
 
-							if (listedResource instanceof Resource) {
-								webhookExecutor.callEvent(new NewResourceEvent((Resource) listedResource));
+							ListedAuthor databaseAuthor = databaseClient.getAuthor(listedResource.getAuthor().getId());
+							if (databaseAuthor != null) {
+								log.info("Updating existing author #" + listedResource.getAuthor().getId());
+								databaseClient.updateAuthor(listedResource.getAuthor());
+							} else {
+								log.info("Inserting new author #" + listedResource.getAuthor().getId());
+								databaseClient.insertAuthor(listedResource.getAuthor());
+
+								if (listedResource.getAuthor() instanceof Author) {
+									webhookExecutor.callEvent(new NewAuthorEvent((Author) listedResource.getAuthor()));
+								}
 							}
+
+							databaseClient.updateOrInsertCategory(listedResource.getCategory());
 						}
-
-						ListedAuthor databaseAuthor = databaseClient.getAuthor(listedResource.getAuthor().getId());
-						if (databaseAuthor != null) {
-							log.info("Updating existing author #" + listedResource.getAuthor().getId());
-							databaseClient.updateAuthor(listedResource.getAuthor());
-						} else {
-							log.info("Inserting new author #" + listedResource.getAuthor().getId());
-							databaseClient.insertAuthor(listedResource.getAuthor());
-
-							if (listedResource.getAuthor() instanceof Author) {
-								webhookExecutor.callEvent(new NewAuthorEvent((Author) listedResource.getAuthor()));
-							}
-						}
-
-						databaseClient.updateOrInsertCategory(listedResource.getCategory());
 					} catch (Throwable throwable) {
 						log.error("Unexpected exception while parsing item #" + itemCounter + " on page " + pageCounter, throwable);
 					}
