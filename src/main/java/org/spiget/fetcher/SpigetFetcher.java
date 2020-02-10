@@ -4,6 +4,8 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import lombok.extern.log4j.Log4j2;
 import org.apache.logging.log4j.Level;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
@@ -48,6 +50,7 @@ public class SpigetFetcher {
 	public SpigetFetcher() {
 	}
 
+	@Nullable
 	public SpigetFetcher init() throws IOException {
 		config = new JsonParser().parse(new FileReader("config.json")).getAsJsonObject();
 		SpigetClient.config = config;
@@ -316,7 +319,8 @@ public class SpigetFetcher {
 		}
 	}
 
-	private Resource updateResource(ListedResource listedResource, ResourcePageParser resourcePageParser) {
+	@Nullable
+	private Resource updateResource(@NotNull ListedResource listedResource, @NotNull ResourcePageParser resourcePageParser) {
 		databaseClient.updateStatus("fetch.page.item.state", "general");
 		try {
 			SpigetResponse response = SpigetClient.get(SpigetClient.BASE_URL + "resources/" + listedResource.getId());
@@ -332,7 +336,7 @@ public class SpigetFetcher {
 		}
 	}
 
-	private Resource updateResourceExtras(Resource resource, boolean modeResourceVersions, boolean modeResourceUpdates, boolean modeResourceReviews, boolean modeResourceDownload) throws InterruptedException {
+	private Resource updateResourceExtras(@NotNull Resource resource, boolean modeResourceVersions, boolean modeResourceUpdates, boolean modeResourceReviews, boolean modeResourceDownload) throws InterruptedException {
 		// Do this inside of here, so we can be sure we actually have a Resource object
 		if (modeResourceVersions) {
 			updateResourceVersions(resource);
@@ -351,7 +355,7 @@ public class SpigetFetcher {
 		return resource;
 	}
 
-	private void updateResourceVersions(Resource resource) {
+	private void updateResourceVersions(@NotNull Resource resource) {
 		databaseClient.updateStatus("fetch.page.item.state", "versions");
 		ResourceVersionItemParser resourceVersionItemParser = resource.isPremium() ? new PremiumResourceVersionItemParser() : new ResourceVersionItemParser();
 		try {
@@ -378,7 +382,7 @@ public class SpigetFetcher {
 		}
 	}
 
-	private void updatedResourceUpdates(Resource resource) {
+	private void updatedResourceUpdates(@NotNull Resource resource) {
 		databaseClient.updateStatus("fetch.page.item.state", "updates");
 		ResourceUpdateItemParer resourceUpdateItemParer = new ResourceUpdateItemParer();
 		ResourceUpdateParser resourceUpdateParser = new ResourceUpdateParser();
@@ -416,7 +420,7 @@ public class SpigetFetcher {
 		}
 	}
 
-	private void updateResourceReviews(Resource resource) {
+	private void updateResourceReviews(@NotNull Resource resource) {
 		databaseClient.updateStatus("fetch.page.item.state", "reviews");
 		ResourceReviewItemParser reviewItemParser = new ResourceReviewItemParser();
 		try {
@@ -450,7 +454,7 @@ public class SpigetFetcher {
 		}
 	}
 
-	private void downloadResource(Resource resource) throws InterruptedException {
+	private void downloadResource(@NotNull Resource resource) throws InterruptedException {
 		String basePath = SpigetFetcher.config.get("fetch.resources.downloadBase").getAsString();
 		if (basePath != null && !basePath.isEmpty()) {
 			databaseClient.updateStatus("fetch.page.item.state", "download");
@@ -488,7 +492,8 @@ public class SpigetFetcher {
 		}
 	}
 
-	private File makeDownloadFile(String baseDir, String resource, String type) {
+	@NotNull
+	private File makeDownloadFile(String baseDir, @NotNull String resource, String type) {
 		String[] split = resource.split("");
 		if (split.length == 0) {
 			log.warn("Invalid resource ID! split.length == 0");

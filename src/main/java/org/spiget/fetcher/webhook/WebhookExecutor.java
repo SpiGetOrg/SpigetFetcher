@@ -3,6 +3,7 @@ package org.spiget.fetcher.webhook;
 import com.google.gson.JsonObject;
 import lombok.extern.log4j.Log4j2;
 import org.apache.logging.log4j.Level;
+import org.jetbrains.annotations.NotNull;
 import org.spiget.data.webhook.Webhook;
 import org.spiget.data.webhook.event.WebhookEvent;
 import org.spiget.fetcher.SpigetFetcher;
@@ -29,7 +30,7 @@ public class WebhookExecutor {
 	public WebhookExecutor() {
 	}
 
-	public void callEvent(WebhookEvent event) {
+	public void callEvent(@NotNull WebhookEvent event) {
 		Set<Webhook> webhooks = SpigetFetcher.databaseClient.getWebhooks(event.name);
 		if (webhooks.isEmpty()) {
 			log.info("No webhooks for '" + event.name + "'");
@@ -76,7 +77,7 @@ public class WebhookExecutor {
 	 * -1 = unknown error
 	 * -2 = connection impossible (e.g. invalid URL)
 	 */
-	int postData(String webhookId, String url, String eventType, JsonObject data) {
+	int postData(@NotNull String webhookId, @NotNull String url, @NotNull String eventType, @NotNull JsonObject data) {
 		try {
 			String dataString = data.toString();
 			dataString = dataString.replace("\"_id\":", "\"id\":");

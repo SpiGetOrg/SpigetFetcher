@@ -1,6 +1,7 @@
 package org.spiget.fetcher;
 
 import com.google.gson.JsonObject;
+import org.jetbrains.annotations.NotNull;
 import org.jsoup.Connection;
 import org.jsoup.Jsoup;
 
@@ -8,7 +9,7 @@ import java.io.IOException;
 
 public class Discord {
 
-	public static void postMessage(String content, JsonObject config) throws IOException {
+	public static void postMessage(String content, @NotNull JsonObject config) throws IOException {
 		if(!config.has("discord.channel"))return;
 		String channel = config.get("discord.channel").getAsString();
 
