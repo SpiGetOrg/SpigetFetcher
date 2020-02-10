@@ -202,7 +202,7 @@ public class SpigetFetcher {
 								existingCount = 0;
 								if (listedResource instanceof Resource) {
 									int updateId = -1;
-									List<ResourceUpdate> updates = ((Resource)listedResource).getUpdates();
+									List<ResourceUpdate> updates = ((Resource) listedResource).getUpdates();
 									if (updates != null && !updates.isEmpty()) {
 										updateId = updates.get(0).getId();
 									}
@@ -270,24 +270,28 @@ public class SpigetFetcher {
 			ResourcePageParser resourcePageParser = new ResourcePageParser();
 			for (UpdateRequest request : updateRequests) {
 				Resource resource = databaseClient.getResource(request.getRequestedId());
-				if (resource != null) {
-					try {
-						resource = updateResource(resource, resourcePageParser);
-						if (resource == null) {
-							log.log(Level.INFO, "Deleting resource #" + request.getRequestedId() + " since it has likely been deleted.");
-							databaseClient.deleteResource(request.getRequestedId());
-							databaseClient.deleteUpdateRequest(request);
-							continue;
-						}
-						updateResourceExtras(resource, request.isVersions(), request.isUpdates(), request.isReviews(), false);
-
-						log.info("Updating existing resource #" + resource.getId());
-						databaseClient.updateResource(resource);
-
+				boolean existed = resource!=null;
+				try {
+					resource = updateResource(resource, resourcePageParser);
+					if (resource == null) {
+						log.log(Level.INFO, "Deleting resource #" + request.getRequestedId() + " since it has likely been deleted.");
+						databaseClient.deleteResource(request.getRequestedId());
 						databaseClient.deleteUpdateRequest(request);
-					} catch (Throwable throwable) {
-						log.error("Unexpected exception while updating resource #" + request.getRequestedId(), throwable);
+						continue;
 					}
+					updateResourceExtras(resource, request.isVersions(), request.isUpdates(), request.isReviews(), false);
+
+					if (existed) {
+						log.info("Updating existing resource #" + resource.getId());
+					} else {
+						log.log(Level.INFO, "Handling resource update request for a resource that wasn't in the database already (" + request.getRequestedId() + ")");
+					}
+
+					databaseClient.updateResource(resource);
+
+					databaseClient.deleteUpdateRequest(request);
+				} catch (Throwable throwable) {
+					log.error("Unexpected exception while updating resource #" + request.getRequestedId(), throwable);
 				}
 			}
 			log.log(Level.INFO, "Finished requested updates. Took " + (((double) System.currentTimeMillis() - updateStart) / 1000 / 60) + " minutes to update " + updateCount + " resources.");
