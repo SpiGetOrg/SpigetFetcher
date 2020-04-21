@@ -13,6 +13,8 @@ import org.spiget.client.HtmlUnitClient;
 import org.spiget.client.SpigetClient;
 import org.spiget.client.SpigetDownload;
 import org.spiget.client.SpigetResponse;
+import org.spiget.client.json.JsonClient;
+import org.spiget.client.json.JsonResponse;
 import org.spiget.data.UpdateRequest;
 import org.spiget.data.author.Author;
 import org.spiget.data.author.ListedAuthor;
@@ -266,6 +268,8 @@ public class SpigetFetcher {
 		}
 		log.log(Level.INFO, "Finished live resource fetch");
 
+		int maxResourceRequest = config.get("resourceRequest.max").getAsInt();
+
 		Set<UpdateRequest> updateRequests = databaseClient.getUpdateRequests();
 		System.out.println(updateRequests);
 		if (updateRequests != null && !updateRequests.isEmpty()) {
@@ -273,16 +277,21 @@ public class SpigetFetcher {
 			long updateStart = System.currentTimeMillis();
 			log.log(Level.INFO, "Fetching (" + updateCount + ") resources with requested update...");
 			ResourcePageParser resourcePageParser = new ResourcePageParser();
+			int c = 0;
 			for (UpdateRequest request : updateRequests) {
+				if (c++ > maxResourceRequest) {
+					log.info("Max Resource Requests processed. Stopping.");
+					break;
+				}
 				Resource resource = databaseClient.getResource(request.getRequestedId());
-				boolean existed = resource!=null;
+				boolean existed = resource != null;
 				if (resource == null) {
 					resource = new Resource(request.getRequestedId());
 				}
 				try {
 					resource = updateResource(resource, resourcePageParser);
 					if (resource == null) {
-						if(request.isDelete()) {
+						if (request.isDelete()) {
 							log.log(Level.INFO, "Deleting resource #" + request.getRequestedId() + " since it has likely been deleted.");
 							databaseClient.deleteResource(request.getRequestedId());
 						}
@@ -319,6 +328,19 @@ public class SpigetFetcher {
 				log.log(Level.ERROR, "Webhook-delay interrupted", e);
 			}
 		}
+	}
+
+	private boolean checkIfResourceExists(int id) {
+		try {
+			JsonResponse response = JsonClient.get("https://api.spigotmc.org/simple/0.1/index.php?action=getResource&id=" + id);
+			if (response != null) {
+				if (response.code == 404) { return false; }
+				if (response.code == 200) { return true; }
+			}
+		} catch (Exception e) {
+			log.error("Failed to check if resource #" + id + " exists", e);
+		}
+		return true;// defaulting to true, in case of exceptions on existing stuff
 	}
 
 	@Nullable

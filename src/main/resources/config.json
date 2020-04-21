@@ -25,5 +25,6 @@
   "debug.parse.resource.items": false,
   "debug.parse.resource.page": false,
   "webhook.failThreshold": 3,
-  "webhook.postThreads": 2
+  "webhook.postThreads": 2,
+  "resourceRequest.max": 100
 }
