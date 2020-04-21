@@ -159,160 +159,171 @@ public class SpigetFetcher {
 		databaseClient.updateStatus("fetch.page.amount", pageAmount);
 		int pageCounter = 0;
 		Paginator resourceListPaginator = new Paginator(SpigetClient.BASE_URL + "resources/?page=%s", pageAmount, inverted);
-		//noinspection ForLoopReplaceableByForEach
-		for (Iterator<Document> iterator = resourceListPaginator.iterator(); iterator.hasNext(); ) {
-			if (fetchStopped) { break; }
-			pageCounter++;
-			log.info("Fetching page " + pageCounter + "/" + pageAmount);
-			try {
-				databaseClient.updateStatus("fetch.page.index", pageCounter);
-				Document document = iterator.next();
-				if (pageCounter < pageOffset) {
-					log.info("Skipping page #" + pageCounter + " (Offset: " + pageOffset + ")");
-					continue;
-				}
-
-				ResourceListItemParser resourceItemParser = new ResourceListItemParser();
-				ResourcePageParser resourcePageParser = new ResourcePageParser();
-				Elements resourceListItems = document.select("li.resourceListItem");
-				if (resourceListItems.isEmpty()) {
-					log.warn("Page has " + resourceListItems.size() + " resource items");
-					Discord.postMessage("⚠Resource page has no resource items!", config);
-				} else {
-					log.debug("Page has " + resourceListItems.size() + " resource items");
-				}
-				int itemCounter = 0;
-				for (Element resourceListItem : resourceListItems) {
-					if (fetchStopped) { break; }
-					itemCounter++;
-					databaseClient.updateStatus("fetch.page.item.index", itemCounter);
-					databaseClient.updateStatus("fetch.page.item.state", "list");
-					try {
-						ListedResource listedResource = resourceItemParser.parse(resourceListItem);
-
-						if (listedResource != null) {
-							if (modeResources) {
-								// Update the resource
-								listedResource = updateResource(listedResource, resourcePageParser);
-								listedResource = updateResourceExtras((Resource) listedResource, modeResourceVersions, modeResourceUpdates, modeResourceReviews, true);
-							}
-
-							databaseClient.updateStatus("fetch.page.item.state", "database");
-
-							ListedResource databaseResource = databaseClient.getResource(listedResource.getId());
-							if (databaseResource != null) {
-								log.info("Updating existing resource #" + listedResource.getId());
-								databaseClient.updateResource(listedResource);
-
-								if (databaseResource.getUpdateDate() != listedResource.getUpdateDate()) {// There was actually an update
-									existingCount = 0;
-									if (listedResource instanceof Resource) {
-										int updateId = -1;
-										List<ResourceUpdate> updates = ((Resource) listedResource).getUpdates();
-										if (updates != null && !updates.isEmpty()) {
-											updateId = updates.get(0).getId();
-										}
-										webhookExecutor.callEvent(new ResourceUpdateEvent((Resource) listedResource, listedResource.getVersion().getName(), updateId));
-									}
-								} else {
-									existingCount++;
-									// If we stop on inverted, it would stop immediately
-									if (!inverted && stopOnExisting != -1 && existingCount > stopOnExisting) {
-										log.info("Last new resource found (" + pageCounter + "." + itemCounter + ") #" + existingCount + ". Stopping.");
-										fetchStopped = true;
-										break;
-									}
-								}
-							} else {
-								existingCount = 0;
-								log.info("Inserting new resource #" + listedResource.getId());
-								databaseClient.insertResource(listedResource);
-
-								if (listedResource instanceof Resource) {
-									webhookExecutor.callEvent(new NewResourceEvent((Resource) listedResource));
-								}
-							}
-
-							ListedAuthor databaseAuthor = databaseClient.getAuthor(listedResource.getAuthor().getId());
-							if (databaseAuthor != null) {
-								log.info("Updating existing author #" + listedResource.getAuthor().getId());
-								databaseClient.updateAuthor(listedResource.getAuthor());
-							} else {
-								log.info("Inserting new author #" + listedResource.getAuthor().getId());
-								databaseClient.insertAuthor(listedResource.getAuthor());
-
-								if (listedResource.getAuthor() instanceof Author) {
-									webhookExecutor.callEvent(new NewAuthorEvent((Author) listedResource.getAuthor()));
-								}
-							}
-
-							databaseClient.updateOrInsertCategory(listedResource.getCategory());
-						}
-					} catch (Throwable throwable) {
-						log.error("Unexpected exception while parsing item #" + itemCounter + " on page " + pageCounter, throwable);
-					}
-
-					if (itemCounter % 10 == 0) {
-						databaseClient.updateSystemStats("fetch.");
-					}
-				}
-			} catch (Throwable throwable) {
-				log.log(Level.ERROR, "Unexpected exception while parsing page #" + pageCounter, throwable);
-			}
-
-			databaseClient.updateSystemStats("fetch.");
-
-			if (pageCounter % 2 == 0) {
-				HtmlUnitClient.disposeClient();
-			}
-		}
-		log.log(Level.INFO, "Finished live resource fetch");
-
-		int maxResourceRequest = config.get("resourceRequest.max").getAsInt();
-		Set<UpdateRequest> updateRequests = databaseClient.getUpdateRequests(maxResourceRequest);
-		System.out.println(updateRequests);
-		if (updateRequests != null && !updateRequests.isEmpty()) {
-			int updateCount = updateRequests.size();
-			long updateStart = System.currentTimeMillis();
-			log.log(Level.INFO, "Fetching (" + updateCount + ") resources with requested update...");
-			ResourcePageParser resourcePageParser = new ResourcePageParser();
-			int c = 0;
-			for (UpdateRequest request : updateRequests) {
-				if (c++ > maxResourceRequest) {
-					log.info("Max Resource Requests processed. Stopping.");
-					break;
-				}
-				Resource resource = databaseClient.getResource(request.getRequestedId());
-				boolean existed = resource != null;
-				if (resource == null) {
-					resource = new Resource(request.getRequestedId());
-				}
+		if (!config.get("fetch.requestsOnly").getAsBoolean()) {
+			//noinspection ForLoopReplaceableByForEach
+			for (Iterator<Document> iterator = resourceListPaginator.iterator(); iterator.hasNext(); ) {
+				if (fetchStopped) { break; }
+				pageCounter++;
+				log.info("Fetching page " + pageCounter + "/" + pageAmount);
 				try {
-					resource = updateResource(resource, resourcePageParser);
-					if (resource == null) {
-						if (request.isDelete()) {
-							log.log(Level.INFO, "Deleting resource #" + request.getRequestedId() + " since it has likely been deleted.");
-							databaseClient.deleteResource(request.getRequestedId());
-						}
-						databaseClient.deleteUpdateRequest(request);
+					databaseClient.updateStatus("fetch.page.index", pageCounter);
+					Document document = iterator.next();
+					if (pageCounter < pageOffset) {
+						log.info("Skipping page #" + pageCounter + " (Offset: " + pageOffset + ")");
 						continue;
 					}
-					updateResourceExtras(resource, request.isVersions(), request.isUpdates(), request.isReviews(), false);
 
-					if (existed) {
-						log.info("Updating existing resource #" + resource.getId());
+					ResourceListItemParser resourceItemParser = new ResourceListItemParser();
+					ResourcePageParser resourcePageParser = new ResourcePageParser();
+					Elements resourceListItems = document.select("li.resourceListItem");
+					if (resourceListItems.isEmpty()) {
+						log.warn("Page has " + resourceListItems.size() + " resource items");
+						Discord.postMessage("⚠Resource page has no resource items!", config);
 					} else {
-						log.log(Level.INFO, "Handling resource update request for a resource that wasn't in the database already (" + request.getRequestedId() + ")");
+						log.debug("Page has " + resourceListItems.size() + " resource items");
 					}
+					int itemCounter = 0;
+					for (Element resourceListItem : resourceListItems) {
+						if (fetchStopped) { break; }
+						itemCounter++;
+						databaseClient.updateStatus("fetch.page.item.index", itemCounter);
+						databaseClient.updateStatus("fetch.page.item.state", "list");
+						try {
+							ListedResource listedResource = resourceItemParser.parse(resourceListItem);
 
-					databaseClient.updateResource(resource);
+							if (listedResource != null) {
+								if (modeResources) {
+									// Update the resource
+									listedResource = updateResource(listedResource, resourcePageParser);
+									listedResource = updateResourceExtras((Resource) listedResource, modeResourceVersions, modeResourceUpdates, modeResourceReviews, true);
 
-					databaseClient.deleteUpdateRequest(request);
+									final int resId = listedResource.getId();
+									databaseClient.deleteUpdateRequest(new UpdateRequest() {{
+										this.setRequestedId(resId);
+									}});
+								}
+
+								databaseClient.updateStatus("fetch.page.item.state", "database");
+
+								ListedResource databaseResource = databaseClient.getResource(listedResource.getId());
+								if (databaseResource != null) {
+									log.info("Updating existing resource #" + listedResource.getId());
+									databaseClient.updateResource(listedResource);
+
+									if (databaseResource.getUpdateDate() != listedResource.getUpdateDate()) {// There was actually an update
+										existingCount = 0;
+										if (listedResource instanceof Resource) {
+											int updateId = -1;
+											List<ResourceUpdate> updates = ((Resource) listedResource).getUpdates();
+											if (updates != null && !updates.isEmpty()) {
+												updateId = updates.get(0).getId();
+											}
+											webhookExecutor.callEvent(new ResourceUpdateEvent((Resource) listedResource, listedResource.getVersion().getName(), updateId));
+										}
+									} else {
+										existingCount++;
+										// If we stop on inverted, it would stop immediately
+										if (!inverted && stopOnExisting != -1 && existingCount > stopOnExisting) {
+											log.info("Last new resource found (" + pageCounter + "." + itemCounter + ") #" + existingCount + ". Stopping.");
+											fetchStopped = true;
+											break;
+										}
+									}
+								} else {
+									existingCount = 0;
+									log.info("Inserting new resource #" + listedResource.getId());
+									databaseClient.insertResource(listedResource);
+
+									if (listedResource instanceof Resource) {
+										webhookExecutor.callEvent(new NewResourceEvent((Resource) listedResource));
+									}
+								}
+
+								ListedAuthor databaseAuthor = databaseClient.getAuthor(listedResource.getAuthor().getId());
+								if (databaseAuthor != null) {
+									log.info("Updating existing author #" + listedResource.getAuthor().getId());
+									databaseClient.updateAuthor(listedResource.getAuthor());
+								} else {
+									log.info("Inserting new author #" + listedResource.getAuthor().getId());
+									databaseClient.insertAuthor(listedResource.getAuthor());
+
+									if (listedResource.getAuthor() instanceof Author) {
+										webhookExecutor.callEvent(new NewAuthorEvent((Author) listedResource.getAuthor()));
+									}
+								}
+
+								databaseClient.updateOrInsertCategory(listedResource.getCategory());
+							}
+						} catch (Throwable throwable) {
+							log.error("Unexpected exception while parsing item #" + itemCounter + " on page " + pageCounter, throwable);
+						}
+
+						if (itemCounter % 10 == 0) {
+							databaseClient.updateSystemStats("fetch.");
+						}
+					}
 				} catch (Throwable throwable) {
-					log.error("Unexpected exception while updating resource #" + request.getRequestedId(), throwable);
+					log.log(Level.ERROR, "Unexpected exception while parsing page #" + pageCounter, throwable);
+				}
+
+				databaseClient.updateSystemStats("fetch.");
+
+				if (pageCounter % 2 == 0) {
+					HtmlUnitClient.disposeClient();
 				}
 			}
-			log.log(Level.INFO, "Finished requested updates. Took " + (((double) System.currentTimeMillis() - updateStart) / 1000 / 60) + " minutes to update " + updateCount + " resources.");
+			log.log(Level.INFO, "Finished live resource fetch");
+		}
+
+		try {
+			log.log(Level.INFO, "Running update request fetch");
+			int maxResourceRequest = config.get("resourceRequest.max").getAsInt();
+			Set<UpdateRequest> updateRequests = databaseClient.getUpdateRequests(maxResourceRequest);
+			if (updateRequests != null && !updateRequests.isEmpty()) {
+				int updateCount = updateRequests.size();
+				long updateStart = System.currentTimeMillis();
+				log.log(Level.INFO, "Fetching (" + updateCount + ") resources with requested update...");
+				ResourcePageParser resourcePageParser = new ResourcePageParser();
+				int c = 0;
+				for (UpdateRequest request : updateRequests) {
+					if (c++ > maxResourceRequest) {
+						log.info("Max Resource Requests processed. Stopping.");
+						break;
+					}
+					Resource resource = databaseClient.getResource(request.getRequestedId());
+					boolean existed = resource != null;
+					if (resource == null) {
+						resource = new Resource(request.getRequestedId());
+					}
+					try {
+						resource = updateResource(resource, resourcePageParser);
+						if (resource == null) {
+							if (request.isDelete()) {
+								log.log(Level.INFO, "Deleting resource #" + request.getRequestedId() + " since it has likely been deleted.");
+								databaseClient.deleteResource(request.getRequestedId());
+							}
+							databaseClient.deleteUpdateRequest(request);
+							continue;
+						}
+						updateResourceExtras(resource, request.isVersions(), request.isUpdates(), request.isReviews(), false);
+
+						if (existed) {
+							log.info("Updating existing resource #" + resource.getId());
+						} else {
+							log.log(Level.INFO, "Handling resource update request for a resource that wasn't in the database already (" + request.getRequestedId() + ")");
+						}
+
+						databaseClient.updateResource(resource);
+
+						databaseClient.deleteUpdateRequest(request);
+					} catch (Throwable throwable) {
+						log.error("Unexpected exception while updating resource #" + request.getRequestedId(), throwable);
+					}
+				}
+				log.log(Level.INFO, "Finished requested updates. Took " + (((double) System.currentTimeMillis() - updateStart) / 1000 / 60) + " minutes to update " + updateCount + " resources.");
+			}
+		} catch (Throwable throwable) {
+			log.log(Level.ERROR, "Update Request exception", throwable);
 		}
 
 		long end = System.currentTimeMillis();
