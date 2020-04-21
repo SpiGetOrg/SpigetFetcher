@@ -269,8 +269,7 @@ public class SpigetFetcher {
 		log.log(Level.INFO, "Finished live resource fetch");
 
 		int maxResourceRequest = config.get("resourceRequest.max").getAsInt();
-
-		Set<UpdateRequest> updateRequests = databaseClient.getUpdateRequests();
+		Set<UpdateRequest> updateRequests = databaseClient.getUpdateRequests(maxResourceRequest);
 		System.out.println(updateRequests);
 		if (updateRequests != null && !updateRequests.isEmpty()) {
 			int updateCount = updateRequests.size();
