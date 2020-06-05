@@ -290,7 +290,13 @@ public class SpigetFetcher {
 						log.info("Max Resource Requests processed. Stopping.");
 						break;
 					}
-					Resource resource = databaseClient.getResource(request.getRequestedId());
+					Resource resource;
+					try {
+						 resource = databaseClient.getResource(request.getRequestedId());
+					} catch (Exception e) {
+						log.log(Level.WARN, "Failed to query resource data for " + request.getRequestedId(), e);
+						continue;
+					}
 					boolean existed = resource != null;
 					if (resource == null) {
 						resource = new Resource(request.getRequestedId());
