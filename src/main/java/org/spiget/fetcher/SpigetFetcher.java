@@ -141,10 +141,14 @@ public class SpigetFetcher {
 	public void fetch() {
 		log.info("----- Fetcher started -----");
 		long start = System.currentTimeMillis();
-		databaseClient.updateStatus("fetch.start", start);
-		int lastEnd = databaseClient.getStatus("fetch.end", 0);
-		databaseClient.updateStatus("fetch.lastEnd", lastEnd);
-		databaseClient.updateStatus("fetch.end", 0);
+		try {
+			databaseClient.updateStatus("fetch.start", start);
+			int lastEnd = databaseClient.getStatus("fetch.end", 0);
+			databaseClient.updateStatus("fetch.lastEnd", lastEnd);
+			databaseClient.updateStatus("fetch.end", 0);
+		} catch (Exception e) {
+			log.log(Level.ERROR, "Failed to update status", e);
+		}
 
 		boolean modeResources = config.get("fetch.mode.resources").getAsBoolean();
 		boolean modeResourceVersions = config.get("fetch.mode.resource.versions").getAsBoolean();
