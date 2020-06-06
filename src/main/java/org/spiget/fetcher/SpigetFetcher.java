@@ -143,7 +143,7 @@ public class SpigetFetcher {
 		long start = System.currentTimeMillis();
 		try {
 			databaseClient.updateStatus("fetch.start", start);
-			int lastEnd = databaseClient.getStatus("fetch.end", 0);
+			long lastEnd = databaseClient.getStatus("fetch.end", 0);
 			databaseClient.updateStatus("fetch.lastEnd", lastEnd);
 			databaseClient.updateStatus("fetch.end", 0);
 		} catch (Exception e) {
