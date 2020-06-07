@@ -338,9 +338,13 @@ public class SpigetFetcher {
 			log.log(Level.ERROR, "Update Request exception", throwable);
 		}
 
-		long end = System.currentTimeMillis();
-		databaseClient.updateStatus("fetch.end", end);
-		databaseClient.updateStatus("fetch.duration", (end - start));
+		try {
+			long end = System.currentTimeMillis();
+			databaseClient.updateStatus("fetch.end", end);
+			databaseClient.updateStatus("fetch.duration", (end - start));
+		} catch (Exception e) {
+			log.log(Level.ERROR, "Failed to update status", e);
+		}
 
 		log.info("Waiting for (" + webhookExecutor.pendingCalls + ") Webhooks to complete...");
 		while (!webhookExecutor.isFinished()) {
