@@ -23,6 +23,8 @@ public class Discord {
 					.method(Connection.Method.POST)
 					.userAgent("Spiget")
 					.header("Authorization","Bot "+config.get("discord.token").getAsString())
+					.header("Content-Type", "application/json")
+					.ignoreContentType(true)
 					.requestBody(body.toString())
 					.execute();
 		} catch (Exception e) {
