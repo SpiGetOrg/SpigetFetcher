@@ -184,6 +184,7 @@ public class SpigetFetcher {
 					Elements resourceListItems = document.select("li.resourceListItem");
 					if (resourceListItems.isEmpty()) {
 						log.warn("Page has " + resourceListItems.size() + " resource items");
+						log.info(document);
 						Discord.postMessage("⚠Resource page has no resource items!", config);
 					} else {
 						log.debug("Page has " + resourceListItems.size() + " resource items");

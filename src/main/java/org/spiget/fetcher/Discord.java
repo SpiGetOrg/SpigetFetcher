@@ -7,6 +7,8 @@ import org.jsoup.Connection;
 import org.jsoup.Jsoup;
 
 import java.io.IOException;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 
 @Log4j2
 public class Discord {
@@ -17,16 +19,25 @@ public class Discord {
 
 		try {
 			JsonObject body = new JsonObject();
-			body.addProperty("content", content);
+			body.addProperty("content", URLEncoder.encode(content, "utf8"));
 
-			Jsoup.connect("https://discordapp.com/api/channels/"+channel+"/messages")
+			String bodyString = body.toString();
+
+			Connection.Response response = Jsoup.connect("https://discordapp.com/api/channels/"+channel+"/messages")
 					.method(Connection.Method.POST)
 					.userAgent("Spiget")
 					.header("Authorization","Bot "+config.get("discord.token").getAsString())
+					.header("Accept", "application/json")
 					.header("Content-Type", "application/json")
+					.header("Content-Length", String.valueOf(bodyString.getBytes(StandardCharsets.UTF_8).length))
 					.ignoreContentType(true)
-					.requestBody(body.toString())
+					.ignoreHttpErrors(true)
+					.requestBody(bodyString)
 					.execute();
+			log.info("Discord Response code: " + response.statusCode());
+			if (response.statusCode() != 200) {
+				log.warn(response.body());
+			}
 		} catch (Exception e) {
 			log.warn("Failed to post discord message", e);
 		}
