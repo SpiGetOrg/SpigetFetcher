@@ -9,10 +9,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
-import org.spiget.client.HtmlUnitClient;
-import org.spiget.client.SpigetClient;
-import org.spiget.client.SpigetDownload;
-import org.spiget.client.SpigetResponse;
+import org.spiget.client.*;
 import org.spiget.client.json.JsonClient;
 import org.spiget.client.json.JsonResponse;
 import org.spiget.data.UpdateRequest;
@@ -36,6 +33,7 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.nio.channels.Channels;
 import java.nio.channels.ReadableByteChannel;
+import java.nio.file.Paths;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
@@ -57,6 +55,8 @@ public class SpigetFetcher {
 		config = new JsonParser().parse(new FileReader("config.json")).getAsJsonObject();
 		SpigetClient.config = config;
 		SpigetClient.userAgent = config.get("request.userAgent").getAsString();
+		PuppeteerClient.DIR_NAME = config.get("puppeteer.path").getAsString();
+		PuppeteerClient.DIR = Paths.get(PuppeteerClient.DIR_NAME);
 		SpigetClient.loadCookiesFromFile();
 
 		webhookExecutor = new WebhookExecutor();
