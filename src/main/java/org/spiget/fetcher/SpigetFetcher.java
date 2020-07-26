@@ -34,9 +34,7 @@ import java.io.IOException;
 import java.nio.channels.Channels;
 import java.nio.channels.ReadableByteChannel;
 import java.nio.file.Paths;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 @Log4j2
 public class SpigetFetcher {
@@ -414,7 +412,9 @@ public class SpigetFetcher {
 			Element resourceHistory = versionDocument.select("table.resourceHistory").first();
 			Elements versionElements = resourceHistory.select("tr.dataRow");
 			boolean first = true;
+			int i=0;
 			for (Element versionElement : versionElements) {
+				i++;
 				if (first) {
 					// The first row is the table header
 					first = false;
@@ -424,6 +424,13 @@ public class SpigetFetcher {
 				ResourceVersion resourceVersion = resourceVersionItemParser.parse(versionElement, resource);
 				resource.getVersions().add(resourceVersion);
 				resourceVersion.setResource(resource.getId());
+
+				try {
+					UUID uuid = ResourceVersion.makeUuid(resource.getId(), resource.getAuthor().getId(),resourceVersion.getName(),versionElements.size()-i/*initial version doesn't count as update*/,new Date(resourceVersion.getReleaseDate()*1000));
+					resourceVersion.setUuid(uuid);
+				} catch (Exception e) {
+					log.log(Level.ERROR, "Failed to make UUID for version, Resource: "+resource.getId()+", Version: "+resourceVersion.getName(), e);
+				}
 
 				databaseClient.updateOrInsertVersion(resource, resourceVersion);
 			}
