@@ -1,5 +1,6 @@
 package org.spiget.fetcher;
 
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import lombok.extern.log4j.Log4j2;
@@ -55,6 +56,9 @@ public class SpigetFetcher {
 		SpigetClient.userAgent = config.get("request.userAgent").getAsString();
 		PuppeteerClient.DIR_NAME = config.get("puppeteer.path").getAsString();
 		PuppeteerClient.DIR = Paths.get(PuppeteerClient.DIR_NAME);
+		for (JsonElement el : config.getAsJsonArray("puppeteer.hosts")) {
+			PuppeteerClient2.HOSTS.add(el.getAsString());
+		}
 		SpigetClient.loadCookiesFromFile();
 
 		webhookExecutor = new WebhookExecutor();
