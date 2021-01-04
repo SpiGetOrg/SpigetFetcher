@@ -427,15 +427,15 @@ public class SpigetFetcher {
 				}
 
 				ResourceVersion resourceVersion = resourceVersionItemParser.parse(versionElement, resource);
-				resource.getVersions().add(resourceVersion);
-				resourceVersion.setResource(resource.getId());
-
 				try {
 					UUID uuid = ResourceVersion.makeUuid(resource.getId(), resource.getAuthor().getId(),resourceVersion.getName(),versionElements.size()-i/*initial version doesn't count as update*/,new Date(resourceVersion.getReleaseDate()*1000));
 					resourceVersion.setUuid(uuid);
 				} catch (Exception e) {
 					log.log(Level.ERROR, "Failed to make UUID for version, Resource: "+resource.getId()+", Version: "+resourceVersion.getName(), e);
 				}
+
+				resource.getVersions().add(resourceVersion);
+				resourceVersion.setResource(resource.getId());
 
 				databaseClient.updateOrInsertVersion(resource, resourceVersion);
 			}
