@@ -1,9 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<Configuration status="INFO">
+<Configuration status="debug" packages="org.apache.logging.log4j.core,io.sentry.log4j2">
     <Appenders>
         <Console name="Console" target="SYSTEM_OUT">
             <PatternLayout pattern="%highlight{%d{HH:mm:ss.SSS} [%t] %-5level %-20logger{1} %msg%n}{FATAL=white, ERROR=red, WARN=yellow, INFO=white, DEBUG=green, TRACE=blue}"/>
         </Console>
+        <Sentry name="Sentry"/>
         <RollingRandomAccessFile name="File" fileName="logs/latest.log" filePattern="logs/%d{yyyy-MM-dd}-%i.log.gz">
             <PatternLayout pattern="%d{yyy-MM-dd HH:mm:ss.SSS} [%t] %-5level %-20logger{1} %msg%nn" />
             <Policies>
@@ -14,6 +15,7 @@
     </Appenders>
     <Loggers>
         <Root level="debug">
+            <AppenderRef ref="Sentry"/>
             <AppenderRef ref="Console"/>
             <AppenderRef ref="File"/>
         </Root>

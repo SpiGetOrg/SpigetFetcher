@@ -1,6 +1,7 @@
 package org.spiget.fetcher;
 
 import com.google.gson.JsonObject;
+import io.sentry.Sentry;
 import lombok.extern.log4j.Log4j2;
 import org.jetbrains.annotations.NotNull;
 import org.jsoup.Connection;
@@ -40,6 +41,7 @@ public class Discord {
 			}
 		} catch (Exception e) {
 			log.warn("Failed to post discord message", e);
+			Sentry.captureException(e);
 		}
 	}
 
