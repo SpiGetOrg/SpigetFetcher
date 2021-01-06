@@ -182,6 +182,7 @@ public class SpigetFetcher {
         int pageOffset = config.get("fetch.resources.pageOffset").getAsInt();
         boolean inverted = config.get("fetch.resources.inverted").getAsBoolean();
         databaseClient.updateStatus("fetch.page.amount", pageAmount);
+        Set<Integer> updatedResourceIds = new HashSet<>();
         int pageCounter = 0;
         Paginator resourceListPaginator = new Paginator(SpigetClient.BASE_URL + "resources/?page=%s", pageAmount, inverted);
         if (!config.get("fetch.requestsOnly").getAsBoolean()) {
@@ -234,6 +235,7 @@ public class SpigetFetcher {
                                 ListedResource databaseResource = databaseClient.getResource(listedResource.getId());
                                 if (databaseResource != null) {
                                     log.info("Updating existing resource #" + listedResource.getId());
+                                    updatedResourceIds.add(listedResource.getId());
                                     databaseClient.updateResource(listedResource);
 
                                     if (databaseResource.getUpdateDate() != listedResource.getUpdateDate()) {// There was actually an update
@@ -317,6 +319,10 @@ public class SpigetFetcher {
                     if (c++ > maxResourceRequest) {
                         log.info("Max Resource Requests processed. Stopping.");
                         break;
+                    }
+                    if (updatedResourceIds.contains(request.getRequestedId())) {
+                        databaseClient.deleteUpdateRequest(request);
+                        continue;
                     }
                     Resource resource;
                     try {
