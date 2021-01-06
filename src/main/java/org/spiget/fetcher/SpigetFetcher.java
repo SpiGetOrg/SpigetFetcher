@@ -36,7 +36,6 @@ import java.nio.channels.Channels;
 import java.nio.channels.ReadableByteChannel;
 import java.nio.file.Paths;
 import java.util.*;
-import java.util.concurrent.ThreadLocalRandom;
 
 @Log4j2
 public class SpigetFetcher {
@@ -58,12 +57,6 @@ public class SpigetFetcher {
 
         try {
             Sentry.captureMessage("#init");
-            try {
-                throw new RuntimeException("Test Exception " + ThreadLocalRandom.current().nextInt());
-            } catch (Exception e) {
-                Sentry.captureException(e);
-                log.log(Level.ERROR, "", e);
-            }
 
             config = new JsonParser().parse(new FileReader("config.json")).getAsJsonObject();
             SpigetClient.config = config;
