@@ -5,6 +5,7 @@ import com.google.gson.JsonParser;
 import io.sentry.Sentry;
 import lombok.extern.log4j.Log4j2;
 import org.apache.logging.log4j.Level;
+import org.influxdb.dto.Point;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jsoup.nodes.Document;
@@ -46,6 +47,8 @@ public class SpigetFetcher {
 
     WebhookExecutor webhookExecutor;
 
+    static SpigetMetrics metrics;
+
     public SpigetFetcher() {
     }
 
@@ -56,8 +59,6 @@ public class SpigetFetcher {
         });
 
         try {
-            Sentry.captureMessage("#init");
-
             config = new JsonParser().parse(new FileReader("config.json")).getAsJsonObject();
             SpigetClient.config = config;
             SpigetClient.userAgent = config.get("request.userAgent").getAsString();
@@ -67,6 +68,8 @@ public class SpigetFetcher {
             //		PuppeteerClient2.HOST = hostArray.get(ThreadLocalRandom.current().nextInt(hostArray.size())).getAsString();
             //		log.info("Using puppeteer host " + PuppeteerClient2.HOST);
             SpigetClient.loadCookiesFromFile();
+
+            metrics = new SpigetMetrics(config);
 
             webhookExecutor = new WebhookExecutor();
             Runtime.getRuntime().addShutdownHook(new Thread() {
@@ -156,7 +159,6 @@ public class SpigetFetcher {
     }
 
     public void fetch() {
-        Sentry.captureMessage("#fetch");
         log.info("----- Fetcher started -----");
         long start = System.currentTimeMillis();
         try {
@@ -176,6 +178,7 @@ public class SpigetFetcher {
 
         int stopOnExisting = config.get("fetch.resources.stopOnExisting").getAsInt();
         int existingCount = 0;
+        int newCount = 0;
         boolean fetchStopped = false;
 
         int pageAmount = config.get("fetch.resources.pages").getAsInt();
@@ -239,6 +242,7 @@ public class SpigetFetcher {
                                     databaseClient.updateResource(listedResource);
 
                                     if (databaseResource.getUpdateDate() != listedResource.getUpdateDate()) {// There was actually an update
+                                        newCount++;
                                         existingCount = 0;
                                         if (listedResource instanceof Resource) {
                                             int updateId = -1;
@@ -306,13 +310,30 @@ public class SpigetFetcher {
         }
 
         try {
+            metrics.metrics.getInflux().write(Point
+                    .measurement("new_resources")
+                    .addField("count", newCount)
+                    .build());
+        } catch (Exception e) {
+            Sentry.captureException(e);
+        }
+
+        try {
             log.log(Level.INFO, "Running update request fetch");
             int maxResourceRequest = config.get("resourceRequest.max").getAsInt();
             Set<UpdateRequest> updateRequests = databaseClient.getUpdateRequests(maxResourceRequest);
             if (updateRequests != null && !updateRequests.isEmpty()) {
-                int updateCount = updateRequests.size();
+                int updateRequestCount = updateRequests.size();
+                try {
+                    metrics.metrics.getInflux().write(Point
+                            .measurement("update_requests")
+                            .addField("count", updateRequestCount)
+                            .build());
+                } catch (Exception e) {
+                    Sentry.captureException(e);
+                }
                 long updateStart = System.currentTimeMillis();
-                log.log(Level.INFO, "Fetching (" + updateCount + ") resources with requested update...");
+                log.log(Level.INFO, "Fetching (" + updateRequestCount + ") resources with requested update...");
                 ResourcePageParser resourcePageParser = new ResourcePageParser();
                 int c = 0;
                 for (UpdateRequest request : updateRequests) {
@@ -362,20 +383,28 @@ public class SpigetFetcher {
                         log.error("Unexpected exception while updating resource #" + request.getRequestedId(), throwable);
                     }
                 }
-                log.log(Level.INFO, "Finished requested updates. Took " + (((double) System.currentTimeMillis() - updateStart) / 1000 / 60) + " minutes to update " + updateCount + " resources.");
+                log.log(Level.INFO, "Finished requested updates. Took " + (((double) System.currentTimeMillis() - updateStart) / 1000 / 60) + " minutes to update " + updateRequestCount + " resources.");
             }
         } catch (Throwable throwable) {
             Sentry.captureException(throwable);
             log.log(Level.ERROR, "Update Request exception", throwable);
         }
 
+        long end = System.currentTimeMillis();
         try {
-            long end = System.currentTimeMillis();
             databaseClient.updateStatus("fetch.end", end);
             databaseClient.updateStatus("fetch.duration", (end - start));
         } catch (Exception e) {
             Sentry.captureException(e);
             log.log(Level.ERROR, "Failed to update status", e);
+        }
+        try {
+            metrics.metrics.getInflux().write(Point
+                    .measurement("fetch_duration")
+                    .addField("duration", (end - start))
+                    .build());
+        } catch (Exception e) {
+            Sentry.captureException(e);
         }
 
         log.info("Waiting for (" + webhookExecutor.pendingCalls + ") Webhooks to complete...");
