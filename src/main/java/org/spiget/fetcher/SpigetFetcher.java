@@ -70,6 +70,8 @@ public class SpigetFetcher {
             SpigetClient.loadCookiesFromFile();
 
             metrics = new SpigetMetrics(config);
+            SpigetClient.metrics = metrics.metrics;
+            SpigetClient.project = "fetcher";
 
             webhookExecutor = new WebhookExecutor();
             Runtime.getRuntime().addShutdownHook(new Thread() {
