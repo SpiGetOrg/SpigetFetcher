@@ -418,6 +418,8 @@ public class SpigetFetcher {
                 log.log(Level.ERROR, "Webhook-delay interrupted", e);
             }
         }
+
+        System.exit(0);
     }
 
     private boolean checkIfResourceExists(int id) {
