@@ -9,7 +9,6 @@ import org.jsoup.Jsoup;
 
 import java.io.IOException;
 import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
 
 @Log4j2
 public class Discord {
@@ -28,10 +27,7 @@ public class Discord {
 					.method(Connection.Method.POST)
 					.userAgent("Spiget")
 					.header("Authorization","Bot "+config.get("discord.token").getAsString())
-					.header("Accept", "application/json")
 					.header("Content-Type", "application/json")
-					.header("Content-Length", String.valueOf(bodyString.getBytes(StandardCharsets.UTF_8).length))
-					.ignoreContentType(true)
 					.ignoreHttpErrors(true)
 					.requestBody(bodyString)
 					.execute();
