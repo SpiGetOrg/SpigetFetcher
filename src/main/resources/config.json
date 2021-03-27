@@ -26,5 +26,7 @@
   "debug.parse.resource.page": false,
   "webhook.failThreshold": 3,
   "webhook.postThreads": 2,
-  "resourceRequest.max": 100
+  "resourceRequest.max": 100,
+  "b2.app": "",
+  "b2.key": ""
 }

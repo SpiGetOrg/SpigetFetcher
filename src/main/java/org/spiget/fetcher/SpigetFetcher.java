@@ -1,5 +1,10 @@
 package org.spiget.fetcher;
 
+import com.backblaze.b2.client.B2StorageClient;
+import com.backblaze.b2.client.B2StorageClientFactory;
+import com.backblaze.b2.client.contentSources.B2ContentTypes;
+import com.backblaze.b2.client.contentSources.B2FileContentSource;
+import com.backblaze.b2.client.structures.B2UploadFileRequest;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import io.sentry.Sentry;
@@ -44,6 +49,7 @@ public class SpigetFetcher {
     public static JsonObject config;
 
     public static DatabaseClient databaseClient;
+    static B2StorageClient b2Client;
 
     WebhookExecutor webhookExecutor;
 
@@ -120,6 +126,17 @@ public class SpigetFetcher {
 
                     System.exit(-1);
                     return null;
+                }
+            }
+
+            {
+                log.info("Initializing B2...");
+                try {
+                    b2Client = B2StorageClientFactory.createDefaultFactory()
+                            .create(config.get("b2.app").getAsString(), config.get("b2.key").getAsString(), "SpigetFetcher");
+                } catch (Exception e) {
+                    Sentry.captureException(e);
+                    log.fatal("Failed to init B2", e);
                 }
             }
 
@@ -614,6 +631,18 @@ public class SpigetFetcher {
                     out.getChannel().transferFrom(channel, 0, 10000000L/*10MB, should be enough*/);
                     out.flush();
                     out.close();
+
+                    if (b2Client != null) {
+                        try {
+                            b2Client.uploadSmallFile(B2UploadFileRequest
+                                    .builder("spiget-resources", outputFile.getName(), B2ContentTypes.B2_AUTO, B2FileContentSource
+                                            .build(outputFile))
+                                    .build());
+                        } catch (Exception e) {
+                            Sentry.captureException(e);
+                            log.warn("Failed to upload " + outputFile + " to B2", e);
+                        }
+                    }
                 } else {
                     log.warn("Download is not available (probably blocked by CloudFlare)");
                 }
