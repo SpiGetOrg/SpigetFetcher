@@ -369,7 +369,7 @@ public class SpigetFetcher {
                             databaseClient.deleteUpdateRequest(request);
                             continue;
                         }
-                        updateResourceExtras(resource, request.isVersions(), request.isUpdates(), request.isReviews(), false);
+                        updateResourceExtras(resource, request.isVersions(), request.isUpdates(), request.isReviews(), true);
 
                         if (existed) {
                             log.info("Updating existing resource #" + resource.getId());
