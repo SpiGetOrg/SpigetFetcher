@@ -182,7 +182,7 @@ public class SpigetFetcher {
         long start = System.currentTimeMillis();
         try {
             databaseClient.updateStatus("fetch.start", start);
-            long lastEnd = databaseClient.getStatus("fetch.end", 0L);
+            long lastEnd = ((Number) databaseClient.getStatus("fetch.end", 0)).longValue();
             databaseClient.updateStatus("fetch.lastEnd", lastEnd);
             databaseClient.updateStatus("fetch.end", 0);
         } catch (Exception e) {
@@ -634,8 +634,10 @@ public class SpigetFetcher {
 
                     if (b2Client != null) {
                         try {
+                            String[] split = String.valueOf(resource.getId()).split("");
+                            String name = String.join("/", Arrays.copyOfRange(split, 0, split.length - 1)) + "/" + resource.getId();
                             b2Client.uploadSmallFile(B2UploadFileRequest
-                                    .builder("spiget-resources", outputFile.getName(), B2ContentTypes.B2_AUTO, B2FileContentSource
+                                    .builder(config.get("b2.bucket").getAsString(), name, B2ContentTypes.B2_AUTO, B2FileContentSource
                                             .build(outputFile))
                                     .build());
                         } catch (Exception e) {
