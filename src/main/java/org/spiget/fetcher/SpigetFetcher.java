@@ -635,7 +635,7 @@ public class SpigetFetcher {
                     if (b2Client != null) {
                         try {
                             String[] split = String.valueOf(resource.getId()).split("");
-                            String name = String.join("/", Arrays.copyOfRange(split, 0, split.length - 1)) + "/" + resource.getId();
+                            String name = String.join("/", Arrays.copyOfRange(split, 0, split.length - 1)) + "/" + resource.getId() + resource.getFile().getType();
                             b2Client.uploadSmallFile(B2UploadFileRequest
                                     .builder(config.get("b2.bucket").getAsString(), name, B2ContentTypes.B2_AUTO, B2FileContentSource
                                             .build(outputFile))
