@@ -255,10 +255,10 @@ public class SpigetFetcher {
 
                                 ListedResource databaseResource = databaseClient.getResource(listedResource.getId());
                                 if (databaseResource != null) {
-                                    log.info("Updating existing resource #" + listedResource.getId());
                                     if (modeResources) {
                                         listedResource = updateResourceExtras((Resource) listedResource, modeResourceVersions, modeResourceUpdates, modeResourceReviews, true);
                                     }
+                                    log.info("Updating existing resource #" + listedResource.getId());
 
                                     updatedResourceIds.add(listedResource.getId());
                                     databaseClient.updateResource(listedResource);
@@ -285,6 +285,9 @@ public class SpigetFetcher {
                                     }
                                 } else {
                                     existingCount = 0;
+                                    if (modeResources) {
+                                        listedResource = updateResourceExtras((Resource) listedResource, modeResourceVersions, modeResourceUpdates, modeResourceReviews, true);
+                                    }
                                     log.info("Inserting new resource #" + listedResource.getId());
                                     databaseClient.insertResource(listedResource);
 
