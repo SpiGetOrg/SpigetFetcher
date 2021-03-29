@@ -244,7 +244,6 @@ public class SpigetFetcher {
                                 if (modeResources) {
                                     // Update the resource
                                     listedResource = updateResource(listedResource, resourcePageParser);
-                                    listedResource = updateResourceExtras((Resource) listedResource, modeResourceVersions, modeResourceUpdates, modeResourceReviews, true);
 
                                     final int resId = listedResource.getId();
                                     databaseClient.deleteUpdateRequest(new UpdateRequest() {{
@@ -257,6 +256,10 @@ public class SpigetFetcher {
                                 ListedResource databaseResource = databaseClient.getResource(listedResource.getId());
                                 if (databaseResource != null) {
                                     log.info("Updating existing resource #" + listedResource.getId());
+                                    if (modeResources) {
+                                        listedResource = updateResourceExtras((Resource) listedResource, modeResourceVersions, modeResourceUpdates, modeResourceReviews, true);
+                                    }
+
                                     updatedResourceIds.add(listedResource.getId());
                                     databaseClient.updateResource(listedResource);
 
@@ -634,10 +637,10 @@ public class SpigetFetcher {
 
                     if (b2Client != null) {
                         try {
-                            String[] split = String.valueOf(resource.getId()).split("");
-                            String name = String.join("/", Arrays.copyOfRange(split, 0, split.length - 1)) + "/" + resource.getId() + resource.getFile().getType();
+//                            String[] split = String.valueOf(resource.getId()).split("");
+//                            String name = String.join("/", Arrays.copyOfRange(split, 0, split.length - 1)) + "/" + resource.getId() + resource.getFile().getType();
                             b2Client.uploadSmallFile(B2UploadFileRequest
-                                    .builder(config.get("b2.bucket").getAsString(), name, B2ContentTypes.B2_AUTO, B2FileContentSource
+                                    .builder(config.get("b2.bucket").getAsString(), "" + resource.getId() + resource.getFile().getType(), B2ContentTypes.B2_AUTO, B2FileContentSource
                                             .build(outputFile))
                                     .build());
                         } catch (Exception e) {
