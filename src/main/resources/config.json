@@ -29,5 +29,7 @@
   "resourceRequest.max": 100,
   "b2.app": "",
   "b2.key": "",
-  "b2.bucket": ""
+  "b2.bucket": "",
+  "cf.zone": "",
+  "cf.token": ""
 }

@@ -5,6 +5,7 @@ import com.backblaze.b2.client.B2StorageClientFactory;
 import com.backblaze.b2.client.contentSources.B2ContentTypes;
 import com.backblaze.b2.client.contentSources.B2FileContentSource;
 import com.backblaze.b2.client.structures.B2UploadFileRequest;
+import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import io.sentry.Sentry;
@@ -13,6 +14,8 @@ import org.apache.logging.log4j.Level;
 import org.influxdb.dto.Point;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jsoup.Connection;
+import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
@@ -54,6 +57,8 @@ public class SpigetFetcher {
     WebhookExecutor webhookExecutor;
 
     static SpigetMetrics metrics;
+
+    Set<String> downloadedResources = new HashSet<>();
 
     public SpigetFetcher() {
     }
@@ -417,6 +422,26 @@ public class SpigetFetcher {
             log.log(Level.ERROR, "Update Request exception", throwable);
         }
 
+        try {
+            if (!downloadedResources.isEmpty()) {
+                JsonArray body = new JsonArray();
+                downloadedResources.forEach(r->{
+                    body.add("https://cdn.spiget.org/files/spiget-resources/" + r);
+                });
+                Connection.Response response = Jsoup.connect("https://api.cloudflare.com/client/v4/zones/" + config.get("cf.zone") + "/purge_cache")
+                        .header("Content-Type", "application/json")
+                        .header("Authorization", "Bearer " + config.get("cf.token"))
+                        .requestBody(JsonClient.gson.toJson(body))
+                        .method(Connection.Method.POST)
+                        .execute();
+                log.log(Level.INFO, "CF purge " + response.statusCode() + " " + response.statusMessage());
+                log.log(Level.INFO, response.body());
+            }
+        } catch (Exception e) {
+            Sentry.captureException(e);
+            log.log(Level.WARN, "Failed to invalidate cloudflare cache", e);
+        }
+
         long end = System.currentTimeMillis();
         try {
             databaseClient.updateStatus("fetch.end", end);
@@ -653,6 +678,7 @@ public class SpigetFetcher {
                             log.warn("Failed to upload " + outputFile + " to B2", e);
                         }
                     }
+                    downloadedResources.add("" + resource.getId() + resource.getFile().getType());
                 } else {
                     log.warn("Download is not available (probably blocked by CloudFlare)");
                 }
