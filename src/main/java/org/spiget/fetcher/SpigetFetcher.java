@@ -256,7 +256,7 @@ public class SpigetFetcher {
                                 ListedResource databaseResource = databaseClient.getResource(listedResource.getId());
                                 if (databaseResource != null) {
                                     if (modeResources) {
-                                        listedResource = updateResourceExtras((Resource) listedResource, modeResourceVersions, modeResourceUpdates, modeResourceReviews, true);
+                                        listedResource = updateResourceExtras((Resource) listedResource, modeResourceVersions, modeResourceUpdates, modeResourceReviews, databaseResource.getUpdateDate() != listedResource.getUpdateDate());
                                     }
                                     log.info("Updating existing resource #" + listedResource.getId());
 
@@ -383,6 +383,8 @@ public class SpigetFetcher {
                         resource = new Resource(request.getRequestedId());
                     }
                     try {
+                        long oldUpdateDate = resource.getUpdateDate();
+
                         resource = updateResource(resource, resourcePageParser);
                         if (resource == null) {
                             if (request.isDelete()) {
