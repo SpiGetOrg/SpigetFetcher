@@ -15,6 +15,7 @@ import org.influxdb.dto.Point;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jsoup.Connection;
+import org.jsoup.HttpStatusException;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -424,22 +425,28 @@ public class SpigetFetcher {
 
         try {
             if (!downloadedResources.isEmpty()) {
-                JsonArray body = new JsonArray();
+                JsonArray files = new JsonArray();
                 downloadedResources.forEach(r->{
-                    body.add("https://cdn.spiget.org/file/spiget-resources/" + r);
+                    files.add("https://cdn.spiget.org/file/spiget-resources/" + r);
                 });
-                Connection.Response response = Jsoup.connect("https://api.cloudflare.com/client/v4/zones/" + config.get("cf.zone") + "/purge_cache")
+                JsonObject body = new JsonObject();
+                body.add("files", files);
+                Connection.Response response = Jsoup.connect("https://api.cloudflare.com/client/v4/zones/" + config.get("cf.zone").getAsString() + "/purge_cache")
                         .header("Content-Type", "application/json")
-                        .header("Authorization", "Bearer " + config.get("cf.token"))
+                        .header("Authorization", "Bearer " + config.get("cf.token").getAsString())
                         .requestBody(JsonClient.gson.toJson(body))
                         .method(Connection.Method.POST)
+                        .ignoreContentType(true)
+                        .ignoreHttpErrors(true)
                         .execute();
                 log.log(Level.INFO, "CF purge " + response.statusCode() + " " + response.statusMessage());
-                log.log(Level.INFO, response.body());
             }
         } catch (Exception e) {
             Sentry.captureException(e);
             log.log(Level.WARN, "Failed to invalidate cloudflare cache", e);
+            if (e instanceof HttpStatusException) {
+                log.log(Level.WARN, ((HttpStatusException) e).getStatusCode() + "");
+            }
         }
 
         long end = System.currentTimeMillis();
