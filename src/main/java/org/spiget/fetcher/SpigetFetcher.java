@@ -426,7 +426,7 @@ public class SpigetFetcher {
             if (!downloadedResources.isEmpty()) {
                 JsonArray body = new JsonArray();
                 downloadedResources.forEach(r->{
-                    body.add("https://cdn.spiget.org/files/spiget-resources/" + r);
+                    body.add("https://cdn.spiget.org/file/spiget-resources/" + r);
                 });
                 Connection.Response response = Jsoup.connect("https://api.cloudflare.com/client/v4/zones/" + config.get("cf.zone") + "/purge_cache")
                         .header("Content-Type", "application/json")
