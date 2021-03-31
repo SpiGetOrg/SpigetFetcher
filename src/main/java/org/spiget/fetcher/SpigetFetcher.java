@@ -295,6 +295,7 @@ public class SpigetFetcher {
                                         listedResource = updateResourceExtras((Resource) listedResource, modeResourceVersions, modeResourceUpdates, modeResourceReviews, true);
                                     }
                                     log.info("Inserting new resource #" + listedResource.getId());
+                                    updatedResourceIds.add(listedResource.getId());
                                     databaseClient.insertResource(listedResource);
 
                                     if (listedResource instanceof Resource) {
@@ -409,6 +410,7 @@ public class SpigetFetcher {
                         }
 
                         databaseClient.updateResource(resource);
+                        updatedResourceIds.add(resource.getId());
 
                         databaseClient.deleteUpdateRequest(request);
                     } catch (Throwable throwable) {
@@ -435,8 +437,15 @@ public class SpigetFetcher {
         try {
             if (!downloadedResources.isEmpty()) {
                 JsonArray files = new JsonArray();
-                downloadedResources.forEach(r->{
-                    files.add("https://cdn.spiget.org/file/spiget-resources/" + r);
+                downloadedResources.forEach(r -> {
+                    files.add("https://cdn.spiget.org/file/spiget-resources/" + r/*1234.jar*/);
+                });
+                updatedResourceIds.forEach(r -> {
+                    files.add("https://api.spiget.org/v2/resources/" + r/*54321*/);
+                    files.add("https://api.spiget.org/v2/resources/" + r + "/download");
+                    files.add("https://api.spiget.org/v2/resources/" + r + "/versions");
+                    files.add("https://api.spiget.org/v2/resources/" + r + "/versions/latest");
+                    files.add("https://api.spiget.org/v2/resources/" + r + "/updates");
                 });
                 JsonObject body = new JsonObject();
                 body.add("files", files);
@@ -683,8 +692,8 @@ public class SpigetFetcher {
 
                     if (b2Client != null) {
                         try {
-//                            String[] split = String.valueOf(resource.getId()).split("");
-//                            String name = String.join("/", Arrays.copyOfRange(split, 0, split.length - 1)) + "/" + resource.getId() + resource.getFile().getType();
+                            //                            String[] split = String.valueOf(resource.getId()).split("");
+                            //                            String name = String.join("/", Arrays.copyOfRange(split, 0, split.length - 1)) + "/" + resource.getId() + resource.getFile().getType();
                             b2Client.uploadSmallFile(B2UploadFileRequest
                                     .builder(config.get("b2.bucket").getAsString(), "" + resource.getId() + resource.getFile().getType(), B2ContentTypes.B2_AUTO, B2FileContentSource
                                             .build(outputFile))
