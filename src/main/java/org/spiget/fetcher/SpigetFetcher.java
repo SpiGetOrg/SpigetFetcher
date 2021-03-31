@@ -424,6 +424,15 @@ public class SpigetFetcher {
         }
 
         try {
+            metrics.metrics.getInflux().write(Point
+                    .measurement("downloaded_resources")
+                    .addField("count", downloadedResources.size())
+                    .build());
+        } catch (Exception e) {
+            Sentry.captureException(e);
+        }
+
+        try {
             if (!downloadedResources.isEmpty()) {
                 JsonArray files = new JsonArray();
                 downloadedResources.forEach(r->{
