@@ -436,28 +436,30 @@ public class SpigetFetcher {
 
         try {
             if (!downloadedResources.isEmpty()) {
-                JsonArray files = new JsonArray();
+                JsonArray cdnFiles = new JsonArray();
                 downloadedResources.forEach(r -> {
-                    files.add("https://cdn.spiget.org/file/spiget-resources/" + r/*1234.jar*/);
+                    cdnFiles.add("https://cdn.spiget.org/file/spiget-resources/" + r/*1234.jar*/);
                 });
+                purgeCloudflareCache(cdnFiles);
+
+                JsonArray resourceFiles = new JsonArray();
+                JsonArray downloadFiles = new JsonArray();
+                JsonArray versionFiles = new JsonArray();
+                JsonArray latestVersionFiles = new JsonArray();
+                JsonArray updateFiles = new JsonArray();
                 updatedResourceIds.forEach(r -> {
-                    files.add("https://api.spiget.org/v2/resources/" + r/*54321*/);
-                    files.add("https://api.spiget.org/v2/resources/" + r + "/download");
-                    files.add("https://api.spiget.org/v2/resources/" + r + "/versions");
-                    files.add("https://api.spiget.org/v2/resources/" + r + "/versions/latest");
-                    files.add("https://api.spiget.org/v2/resources/" + r + "/updates");
+                    resourceFiles.add("https://api.spiget.org/v2/resources/" + r/*54321*/);
+                    downloadFiles.add("https://api.spiget.org/v2/resources/" + r + "/download");
+                    versionFiles.add("https://api.spiget.org/v2/resources/" + r + "/versions");
+                    latestVersionFiles.add("https://api.spiget.org/v2/resources/" + r + "/versions/latest");
+                    updateFiles.add("https://api.spiget.org/v2/resources/" + r + "/updates");
                 });
-                JsonObject body = new JsonObject();
-                body.add("files", files);
-                Connection.Response response = Jsoup.connect("https://api.cloudflare.com/client/v4/zones/" + config.get("cf.zone").getAsString() + "/purge_cache")
-                        .header("Content-Type", "application/json")
-                        .header("Authorization", "Bearer " + config.get("cf.token").getAsString())
-                        .requestBody(JsonClient.gson.toJson(body))
-                        .method(Connection.Method.POST)
-                        .ignoreContentType(true)
-                        .ignoreHttpErrors(true)
-                        .execute();
-                log.log(Level.INFO, "CF purge " + response.statusCode() + " " + response.statusMessage());
+
+                purgeCloudflareCache(resourceFiles);
+                purgeCloudflareCache(downloadFiles);
+                purgeCloudflareCache(versionFiles);
+                purgeCloudflareCache(latestVersionFiles);
+                purgeCloudflareCache(updateFiles);
             }
         } catch (Exception e) {
             Sentry.captureException(e);
@@ -495,6 +497,23 @@ public class SpigetFetcher {
         }
 
         System.exit(0);
+    }
+
+    private void purgeCloudflareCache(JsonArray files) throws IOException {
+        JsonObject body = new JsonObject();
+        body.add("files", files);
+        Connection.Response response = Jsoup.connect("https://api.cloudflare.com/client/v4/zones/" + config.get("cf.zone").getAsString() + "/purge_cache")
+                .header("Content-Type", "application/json")
+                .header("Authorization", "Bearer " + config.get("cf.token").getAsString())
+                .requestBody(JsonClient.gson.toJson(body))
+                .method(Connection.Method.POST)
+                .ignoreContentType(true)
+                .ignoreHttpErrors(true)
+                .execute();
+        log.log(Level.INFO, "CF purge " + response.statusCode() + " " + response.statusMessage());
+        if (response.statusCode() != 200) {
+            log.warn(response.body());
+        }
     }
 
     private boolean checkIfResourceExists(int id) {
