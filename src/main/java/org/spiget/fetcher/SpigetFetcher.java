@@ -4,6 +4,7 @@ import com.backblaze.b2.client.B2StorageClient;
 import com.backblaze.b2.client.B2StorageClientFactory;
 import com.backblaze.b2.client.contentSources.B2ContentTypes;
 import com.backblaze.b2.client.contentSources.B2FileContentSource;
+import com.backblaze.b2.client.structures.B2FileVersion;
 import com.backblaze.b2.client.structures.B2UploadFileRequest;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
@@ -38,10 +39,7 @@ import org.spiget.database.DatabaseClient;
 import org.spiget.fetcher.webhook.WebhookExecutor;
 import org.spiget.parser.*;
 
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.FileReader;
-import java.io.IOException;
+import java.io.*;
 import java.nio.channels.Channels;
 import java.nio.channels.ReadableByteChannel;
 import java.nio.file.Paths;
@@ -703,7 +701,9 @@ public class SpigetFetcher {
                 log.info("Downloading '" + resource.getFile().getUrl() + "' to '" + outputFile + "'...");
                 SpigetDownload download = SpigetClient.download(SpigetClient.BASE_URL + resource.getFile().getUrl());
                 if (download.isAvailable()) {
-                    ReadableByteChannel channel = Channels.newChannel(download.getInputStream());
+                    InputStream inputStream = download.getInputStream();
+                    log.info("Available Size: " + inputStream.available());
+                    ReadableByteChannel channel = Channels.newChannel(inputStream);
                     FileOutputStream out = new FileOutputStream(outputFile);
                     out.getChannel().transferFrom(channel, 0, 10000000L/*10MB, should be enough*/);
                     out.flush();
@@ -714,10 +714,12 @@ public class SpigetFetcher {
                             //                            String[] split = String.valueOf(resource.getId()).split("");
                             //                            String name = String.join("/", Arrays.copyOfRange(split, 0, split.length - 1)) + "/" + resource.getId() + resource.getFile().getType();
                             log.info("Uploading to B2...");
-                            b2Client.uploadSmallFile(B2UploadFileRequest
-                                    .builder(config.get("b2.bucket").getAsString(), "" + resource.getId() + resource.getFile().getType(), B2ContentTypes.B2_AUTO, B2FileContentSource
-                                            .build(outputFile))
-                                    .build());
+                            B2FileVersion fileVersion = b2Client
+                                    .uploadSmallFile(B2UploadFileRequest
+                                            .builder(config.get("b2.bucket").getAsString(), "" + resource.getId() + resource.getFile().getType(), B2ContentTypes.B2_AUTO, B2FileContentSource
+                                                    .build(outputFile))
+                                            .build());
+                            log.info(fileVersion);
                         } catch (Exception e) {
                             Sentry.captureException(e);
                             log.warn("Failed to upload " + outputFile + " to B2", e);
