@@ -214,7 +214,9 @@ public class SpigetFetcher {
         if (!config.get("fetch.requestsOnly").getAsBoolean()) {
             //noinspection ForLoopReplaceableByForEach
             for (Iterator<Document> iterator = resourceListPaginator.iterator(); iterator.hasNext(); ) {
-                if (fetchStopped) { break; }
+                if (fetchStopped) {
+                    break;
+                }
                 pageCounter++;
                 log.info("Fetching page " + pageCounter + "/" + pageAmount);
                 try {
@@ -237,7 +239,9 @@ public class SpigetFetcher {
                     }
                     int itemCounter = 0;
                     for (Element resourceListItem : resourceListItems) {
-                        if (fetchStopped) { break; }
+                        if (fetchStopped) {
+                            break;
+                        }
                         itemCounter++;
                         databaseClient.updateStatus("fetch.page.item.index", itemCounter);
                         databaseClient.updateStatus("fetch.page.item.state", "list");
@@ -518,8 +522,12 @@ public class SpigetFetcher {
         try {
             JsonResponse response = JsonClient.get("https://api.spigotmc.org/simple/0.1/index.php?action=getResource&id=" + id);
             if (response != null) {
-                if (response.code == 404) { return false; }
-                if (response.code == 200) { return true; }
+                if (response.code == 404) {
+                    return false;
+                }
+                if (response.code == 200) {
+                    return true;
+                }
             }
         } catch (Exception e) {
             Sentry.captureException(e);
@@ -678,84 +686,47 @@ public class SpigetFetcher {
     }
 
     private void downloadResource(@NotNull Resource resource) throws InterruptedException {
-        String basePath = SpigetFetcher.config.get("fetch.resources.downloadBase").getAsString();
-        if (basePath != null && !basePath.isEmpty()) {
-            databaseClient.updateStatus("fetch.page.item.state", "download");
-            log.info("Downloading #" + resource.getId());
-            try {
-                File outputFile = makeDownloadFile(basePath, String.valueOf(resource.getId()), resource.getFile().getType());
-                if (outputFile.exists()) {
-                    log.debug("Overwriting existing file");
-                } else {
-                    outputFile.createNewFile();
+        databaseClient.updateStatus("fetch.page.item.state", "download");
+        log.info("Downloading #" + resource.getId());
+        try {
+            File outputFile = File.createTempFile("resource", resource.getId() + resource.getFile().getType());
 
-                    String os = System.getProperty("os.name").toLowerCase();
-                    if (os.contains("nix") || os.contains("nux") || os.contains("aix")) {
-                        Runtime.getRuntime().exec("chmod 777 " + outputFile);
+            log.info("Downloading '" + resource.getFile().getUrl() + "' to '" + outputFile + "'...");
+            SpigetDownload download = SpigetClient.download(SpigetClient.BASE_URL + resource.getFile().getUrl());
+            if (download.isAvailable()) {
+                InputStream inputStream = download.getInputStream();
+                log.info("Available Size: " + inputStream.available());
+                ReadableByteChannel channel = Channels.newChannel(inputStream);
+                FileOutputStream out = new FileOutputStream(outputFile);
+                out.getChannel().transferFrom(channel, 0, 10000000L/*10MB, should be enough*/);
+                out.flush();
+                out.close();
+
+                if (b2Client != null) {
+                    try {
+                        log.info("Uploading to B2...");
+                        B2FileVersion fileVersion = b2Client
+                                .uploadSmallFile(B2UploadFileRequest
+                                        .builder(config.get("b2.bucket").getAsString(), "" + resource.getId() + resource.getFile().getType(), B2ContentTypes.B2_AUTO, B2FileContentSource
+                                                .build(outputFile))
+                                        .build());
+                        log.info(fileVersion);
+
+                        outputFile.deleteOnExit();
+                    } catch (Exception e) {
+                        Sentry.captureException(e);
+                        log.warn("Failed to upload " + outputFile + " to B2", e);
                     }
-
-                    outputFile.setReadable(true);
-                    outputFile.setWritable(true);
                 }
-
-                log.info("Downloading '" + resource.getFile().getUrl() + "' to '" + outputFile + "'...");
-                SpigetDownload download = SpigetClient.download(SpigetClient.BASE_URL + resource.getFile().getUrl());
-                if (download.isAvailable()) {
-                    InputStream inputStream = download.getInputStream();
-                    log.info("Available Size: " + inputStream.available());
-                    ReadableByteChannel channel = Channels.newChannel(inputStream);
-                    FileOutputStream out = new FileOutputStream(outputFile);
-                    out.getChannel().transferFrom(channel, 0, 10000000L/*10MB, should be enough*/);
-                    out.flush();
-                    out.close();
-
-                    if (b2Client != null) {
-                        try {
-                            //                            String[] split = String.valueOf(resource.getId()).split("");
-                            //                            String name = String.join("/", Arrays.copyOfRange(split, 0, split.length - 1)) + "/" + resource.getId() + resource.getFile().getType();
-                            log.info("Uploading to B2...");
-                            B2FileVersion fileVersion = b2Client
-                                    .uploadSmallFile(B2UploadFileRequest
-                                            .builder(config.get("b2.bucket").getAsString(), "" + resource.getId() + resource.getFile().getType(), B2ContentTypes.B2_AUTO, B2FileContentSource
-                                                    .build(outputFile))
-                                            .build());
-                            log.info(fileVersion);
-                        } catch (Exception e) {
-                            Sentry.captureException(e);
-                            log.warn("Failed to upload " + outputFile + " to B2", e);
-                        }
-                    }
-                    downloadedResources.add("" + resource.getId() + resource.getFile().getType());
-                } else {
-                    log.warn("Download is not available (probably blocked by CloudFlare)");
-                }
-            } catch (IOException e) {
-                Sentry.captureException(e);
-                log.warn("Download for resource #" + resource.getId() + " failed", e);
+                downloadedResources.add("" + resource.getId() + resource.getFile().getType());
+            } else {
+                log.warn("Download is not available (probably blocked by CloudFlare)");
             }
+        } catch (IOException e) {
+            Sentry.captureException(e);
+            log.warn("Download for resource #" + resource.getId() + " failed", e);
         }
     }
 
-    @NotNull
-    private File makeDownloadFile(String baseDir, @NotNull String resource, String type) {
-        String[] split = resource.split("");
-        if (split.length == 0) {
-            log.warn("Invalid resource ID! split.length == 0");
-            return new File(new File(baseDir, "INVALID"), String.valueOf(System.currentTimeMillis()));
-        }
-
-        File finalFolder = new File(baseDir);
-        for (int i = 0; i < split.length - 1; i++) {
-            String s = split[i];
-            finalFolder = new File(finalFolder, s);
-            if (!finalFolder.exists()) {
-                finalFolder.mkdir();
-                finalFolder.setReadable(true, false);
-                finalFolder.setWritable(true, false);
-            }
-        }
-
-        return new File(finalFolder, resource + type);
-    }
 
 }
