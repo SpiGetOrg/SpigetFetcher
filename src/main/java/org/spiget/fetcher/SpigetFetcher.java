@@ -112,7 +112,7 @@ public class SpigetFetcher {
                 long testStart = System.currentTimeMillis();
                 try {
                     if (config.has("database.url")) {
-                        databaseClient = new DatabaseClient(config.get("database.url").getAsString());
+                        databaseClient = new DatabaseClient(config.get("database.url").getAsString(), config.get("database.name").getAsString());
                     } else {
                         databaseClient = new DatabaseClient(
                                 config.get("database.name").getAsString(),
@@ -600,7 +600,7 @@ public class SpigetFetcher {
                     resourceVersion.setUuid(uuid);
                 } catch (Exception e) {
                     Sentry.captureException(e);
-                    log.log(Level.ERROR, "Failed to make UUID for version, Resource: " + resource.getId() + ", Version: " + resourceVersion.getName(), e);
+                    log.log(Level.ERROR, "Failed to make UUID for version, Resource: " + resource.getId() + ", Author: " + resource.getAuthor().getId() + ", Version: " + resourceVersion.getName(), e);
                 }
 
                 resource.getVersions().add(resourceVersion);
