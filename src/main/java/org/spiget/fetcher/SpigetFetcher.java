@@ -697,7 +697,7 @@ public class SpigetFetcher {
         databaseClient.updateStatus("fetch.page.item.state", "documentation");
         try {
             if (resource.getLinks().containsKey("documentation")) {
-                Document documentationDocument = SpigetClient.get(resource.getLinks().get("documentation")).getDocument();
+                Document documentationDocument = SpigetClient.get(SpigetClient.BASE_URL + resource.getLinks().get("documentation")).getDocument();
                 Element mainContainer = documentationDocument.select("div.mainContainer").first();
                 if (mainContainer != null) {
                     Element documentationText = mainContainer.select("blockquote.messageText").first();
