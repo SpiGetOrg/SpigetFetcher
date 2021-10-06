@@ -202,6 +202,7 @@ public class SpigetFetcher {
         boolean modeResourceVersions = config.get("fetch.mode.resource.versions").getAsBoolean();
         boolean modeResourceUpdates = config.get("fetch.mode.resource.updates").getAsBoolean();
         boolean modeResourceReviews = config.get("fetch.mode.resource.reviews").getAsBoolean();
+        boolean modeResourceDocumentation = config.get("fetch.mode.resource.documentation").getAsBoolean();
 
         int stopOnExisting = config.get("fetch.resources.stopOnExisting").getAsInt();
         int existingCount = 0;
@@ -268,7 +269,7 @@ public class SpigetFetcher {
                                 ListedResource databaseResource = databaseClient.getResource(listedResource.getId());
                                 if (databaseResource != null) {
                                     if (modeResources) {
-                                        listedResource = updateResourceExtras((Resource) listedResource, modeResourceVersions, modeResourceUpdates, modeResourceReviews, databaseResource.getUpdateDate() != listedResource.getUpdateDate());
+                                        listedResource = updateResourceExtras((Resource) listedResource, modeResourceVersions, modeResourceUpdates, modeResourceReviews, modeResourceDocumentation, databaseResource.getUpdateDate() != listedResource.getUpdateDate());
                                     }
                                     log.info("Updating existing resource #" + listedResource.getId());
 
@@ -298,7 +299,7 @@ public class SpigetFetcher {
                                 } else {
                                     existingCount = 0;
                                     if (modeResources) {
-                                        listedResource = updateResourceExtras((Resource) listedResource, modeResourceVersions, modeResourceUpdates, modeResourceReviews, true);
+                                        listedResource = updateResourceExtras((Resource) listedResource, modeResourceVersions, modeResourceUpdates, modeResourceReviews, modeResourceDocumentation, true);
                                     }
                                     log.info("Inserting new resource #" + listedResource.getId());
                                     updatedResourceIds.add(listedResource.getId());
@@ -407,7 +408,7 @@ public class SpigetFetcher {
                             databaseClient.deleteUpdateRequest(request);
                             continue;
                         }
-                        updateResourceExtras(resource, request.isVersions(), request.isUpdates(), request.isReviews(), true);
+                        updateResourceExtras(resource, request.isVersions(), request.isUpdates(), request.isReviews(), true, true);
 
                         if (existed) {
                             log.info("Updating existing resource #" + resource.getId());
@@ -558,7 +559,7 @@ public class SpigetFetcher {
         }
     }
 
-    private Resource updateResourceExtras(@NotNull Resource resource, boolean modeResourceVersions, boolean modeResourceUpdates, boolean modeResourceReviews, boolean modeResourceDownload) throws InterruptedException {
+    private Resource updateResourceExtras(@NotNull Resource resource, boolean modeResourceVersions, boolean modeResourceUpdates, boolean modeResourceReviews, boolean modeResourceDocumentation, boolean modeResourceDownload) throws InterruptedException {
         // Do this inside of here, so we can be sure we actually have a Resource object
         if (modeResourceVersions) {
             updateResourceVersions(resource);
@@ -568,6 +569,9 @@ public class SpigetFetcher {
         }
         if (modeResourceReviews) {
             updateResourceReviews(resource);
+        }
+        if (modeResourceDocumentation) {
+            updateResourceDocumentation(resource);
         }
         if (modeResourceDownload && !resource.isExternal() && !resource.isPremium()) {
             if (SpigetFetcher.config.get("fetch.resources.download").getAsBoolean()) {
@@ -686,6 +690,25 @@ public class SpigetFetcher {
         } catch (Throwable throwable) {
             Sentry.captureException(throwable);
             log.error("Unexpected exception while parsing resource reviews for #" + resource.getId(), throwable);
+        }
+    }
+
+    private void updateResourceDocumentation(@NotNull Resource resource) {
+        databaseClient.updateStatus("fetch.page.item.state", "documentation");
+        try {
+            if (resource.getLinks().containsKey("documentation")) {
+                Document documentationDocument = SpigetClient.get(resource.getLinks().get("documentation")).getDocument();
+                Element mainContainer = documentationDocument.select("div.mainContainer").first();
+                if (mainContainer != null) {
+                    Element documentationText = mainContainer.select("blockquote.messageText").first();
+                    if (documentationText != null) {
+                        resource.setDocumentation(Base64.getEncoder().encodeToString(documentationText.html().getBytes()));
+                    }
+                }
+            }
+        } catch (Throwable throwable) {
+            Sentry.captureException(throwable);
+            log.error("Unexpected exception while parsing resource documentation for #" + resource.getId(), throwable);
         }
     }
 
