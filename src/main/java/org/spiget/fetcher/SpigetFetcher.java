@@ -548,6 +548,13 @@ public class SpigetFetcher {
             SpigetResponse response = SpigetClient.get(SpigetClient.BASE_URL + "resources/" + listedResource.getId());
             if (response.getCode() != 200) {// This SHOULD only happen if this method is called via the update requests part
                 log.warn("Failed to update resource #" + listedResource.getId() + ": page returned non-OK status code (" + response.getCode() + ")");
+//                log.warn(response.getDocument().toString());
+                if (response.getCode() == 429) {
+                    try {
+                        Thread.sleep(500);
+                    } catch (Exception e) {
+                    }
+                }
                 if(response.getCode()==403) {
                     return null;
                 }
@@ -584,11 +591,26 @@ public class SpigetFetcher {
         return resource;
     }
 
+    void writeDocumentToFile(Document document, String name) {
+//        try {
+//            File file = new File("/home/spiget/spiget/v2/" + name+".html");
+//            try (FileWriter writer = new FileWriter(file)) {
+//                writer.write(document.toString());
+//                writer.flush();
+//            }
+//        } catch (Exception e) {
+//            log.log(Level.WARN, "", e);
+//        }
+    }
+
     private void updateResourceVersions(@NotNull Resource resource) {
         databaseClient.updateStatus("fetch.page.item.state", "versions");
         ResourceVersionItemParser resourceVersionItemParser = resource.isPremium() ? new PremiumResourceVersionItemParser() : new ResourceVersionItemParser();
         try {
             Document versionDocument = SpigetClient.get(SpigetClient.BASE_URL + "resources/" + resource.getId() + "/history").getDocument();
+
+            writeDocumentToFile(versionDocument, resource.getId() + "-history");
+
             Element resourceHistory = versionDocument.select("table.resourceHistory").first();
             Elements versionElements = resourceHistory.select("tr.dataRow");
             boolean first = true;
@@ -637,10 +659,13 @@ public class SpigetFetcher {
                     break;
                 }
 
+                writeDocumentToFile(updateDocument, resource.getId() + "-update");
+
                 Elements resourceUpdateElements = updateDocument.select("li.resourceUpdate");
                 for (Element resourceUpdateElement : resourceUpdateElements) {
                     ResourceUpdate resourceUpdate = resourceUpdateItemParer.parse(resourceUpdateElement);
                     Document resourceUpdateDocument = SpigetClient.get(SpigetClient.BASE_URL + "resources/" + resource.getId() + "/update?update=" + resourceUpdate.getId()).getDocument();
+                    writeDocumentToFile(resourceUpdateDocument, resource.getId() + "-update-"+resourceUpdate.getId());
                     resourceUpdate = resourceUpdateParser.parse(resourceUpdateDocument, resourceUpdate);
 
                     Document resourceUpdateLikesDocument = SpigetClient.get(SpigetClient.BASE_URL + "resources/" + resource.getId() + "/update-likes?resource_update_id=" + resourceUpdate.getId()).getDocument();
