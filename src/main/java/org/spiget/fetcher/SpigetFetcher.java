@@ -548,7 +548,10 @@ public class SpigetFetcher {
             SpigetResponse response = SpigetClient.get(SpigetClient.BASE_URL + "resources/" + listedResource.getId());
             if (response.getCode() != 200) {// This SHOULD only happen if this method is called via the update requests part
                 log.warn("Failed to update resource #" + listedResource.getId() + ": page returned non-OK status code (" + response.getCode() + ")");
-                return null;
+                if(response.getCode()==403) {
+                    return null;
+                }
+                throw new RuntimeException("Failed to update resource #" + listedResource.getId() + ": page returned non-OK status code (" + response.getCode() + ")");
             }
             Document resourceDocument = response.getDocument();
             return resourcePageParser.parse(resourceDocument, listedResource);
