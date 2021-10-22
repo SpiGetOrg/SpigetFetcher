@@ -555,7 +555,7 @@ public class SpigetFetcher {
         } catch (Throwable throwable) {
             Sentry.captureException(throwable);
             log.error("Unexpected exception while parsing full resource #" + listedResource.getId(), throwable);
-            return null;
+            throw new RuntimeException(throwable);
         }
     }
 
