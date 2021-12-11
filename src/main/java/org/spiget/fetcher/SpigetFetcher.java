@@ -670,7 +670,7 @@ public class SpigetFetcher {
                 for (Element resourceUpdateElement : resourceUpdateElements) {
                     ResourceUpdate resourceUpdate = resourceUpdateItemParer.parse(resourceUpdateElement);
                     Document resourceUpdateDocument = SpigetClient.get(SpigetClient.BASE_URL + "resources/" + resource.getId() + "/update?update=" + resourceUpdate.getId()).getDocument();
-                    writeDocumentToFile(resourceUpdateDocument, resource.getId() + "-update-" + resourceUpdate.getId());
+//                    writeDocumentToFile(resourceUpdateDocument, resource.getId() + "-update-" + resourceUpdate.getId());
                     resourceUpdate = resourceUpdateParser.parse(resourceUpdateDocument, resourceUpdate);
 
                     Document resourceUpdateLikesDocument = SpigetClient.get(SpigetClient.BASE_URL + "resources/" + resource.getId() + "/update-likes?resource_update_id=" + resourceUpdate.getId()).getDocument();
