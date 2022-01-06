@@ -64,10 +64,12 @@ public class SpigetFetcher {
 
     @Nullable
     public SpigetFetcher init() {
+        log.debug("init");
         Sentry.init(options -> {
             options.setEnableExternalConfiguration(true);
         });
 
+        log.info("loading config");
         try {
             config = new JsonParser().parse(new FileReader("config.json")).getAsJsonObject();
             SpigetClient.config = config;
@@ -84,6 +86,7 @@ public class SpigetFetcher {
             SpigetClient.project = "fetcher";
 
             webhookExecutor = new WebhookExecutor();
+            log.info("registering shutdown hook");
             Runtime.getRuntime().addShutdownHook(new Thread() {
                 @Override
                 public void run() {
@@ -180,12 +183,14 @@ public class SpigetFetcher {
 
         } catch (Throwable throwable) {
             Sentry.captureException(throwable);
+            log.log(Level.ERROR, "", throwable);
             throw new RuntimeException(throwable);
         }
         return this;
     }
 
     public void fetch() {
+        log.debug("fetch");
         log.info("----- Fetcher started -----");
         long start = System.currentTimeMillis();
         try {
