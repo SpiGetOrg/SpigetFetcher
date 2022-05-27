@@ -565,7 +565,7 @@ public class SpigetFetcher {
                     } catch (Exception e) {
                     }
                 }
-                if (response.getCode() == 403) {
+                if (response.getCode() == 403 || response.getCode() == 404) {
                     return null;
                 }
                 throw new RuntimeException("Failed to update resource #" + listedResource.getId() + ": page returned non-OK status code (" + response.getCode() + ")");
