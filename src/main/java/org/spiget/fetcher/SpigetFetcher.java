@@ -386,6 +386,9 @@ public class SpigetFetcher {
                 ResourcePageParser resourcePageParser = new ResourcePageParser();
                 int c = 0;
                 for (UpdateRequest request : updateRequests) {
+                    if (request.getRequestedId() <= 0) {
+                        continue;
+                    }
                     if (c++ > maxResourceRequest) {
                         log.info("Max Resource Requests processed. Stopping.");
                         break;
