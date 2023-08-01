@@ -734,6 +734,44 @@ public class SpigetFetcher {
         }
     }
 
+    private void updateLatestResourceReviews() {
+        databaseClient.updateStatus("fetch.page.item.state", "reviews");
+        ResourceReviewItemParser reviewItemParser = new ResourceReviewItemParser();
+
+        try {
+            int pageCount = Paginator.parseDocumentPageCount(SpigetClient.get(SpigetClient.BASE_URL + "resources/reviews").getDocument());
+            int maxPage = Math.min(pageCount, config.get("fetch.resources.reviews.maxPage").getAsInt());
+            Paginator resourceReviewsPaginator = new Paginator(SpigetClient.BASE_URL + "resources/reviews?page=%s", maxPage, false);
+
+            for (Document reviewDocument : resourceReviewsPaginator) {
+                Element reviewList = reviewDocument.selectFirst("ol.reviews");
+                Elements reviewElements = reviewList.select("li.primaryContent.review");
+
+                for (Element reviewElement : reviewElements) {
+                    ResourceReview review = reviewItemParser.parse(reviewElement);
+                    Resource resource = databaseClient.getResource(review.getResource());
+
+                    if (resource.getReviews().contains(review)) {
+                        return; //We reached an review that's already in the db, so we finished fetching the latest ones.
+                    }
+
+                    resource.getReviews().add(review);
+                    review.setResource(review.getResource());
+
+                    Author databaseReviewAuthor = databaseClient.getAuthor(review.getAuthor().getId());
+                    if (databaseReviewAuthor == null) {// Only insert if the document doesn't exist, so we don't accidentally overwrite existing data
+                        databaseClient.insertAuthor(review.getAuthor());
+                    }
+
+                    databaseClient.updateOrInsertReview(resource, review);
+                }
+            }
+        } catch (Throwable throwable) {
+            Sentry.captureException(throwable);
+            log.error("Unexpected exception while parsing resource reviews", throwable);
+        }
+    }
+
     private void updateResourceDocumentation(@NotNull Resource resource) {
         databaseClient.updateStatus("fetch.page.item.state", "documentation");
         try {
@@ -795,6 +833,4 @@ public class SpigetFetcher {
             log.warn("Download for resource #" + resource.getId() + " failed", e);
         }
     }
-
-
 }
