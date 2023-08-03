@@ -744,7 +744,7 @@ public class SpigetFetcher {
             Paginator resourceReviewsPaginator = new Paginator(SpigetClient.BASE_URL + "resources/reviews?page=%s", maxPage, false);
 
             for (Document reviewDocument : resourceReviewsPaginator) {
-                Element reviewList = reviewDocument.selectFirst("ol.reviews");
+                Element reviewList = reviewDocument.select("ol.reviews").first();
                 Elements reviewElements = reviewList.select("li.primaryContent.review");
 
                 for (Element reviewElement : reviewElements) {
@@ -752,7 +752,7 @@ public class SpigetFetcher {
                     Resource resource = databaseClient.getResource(review.getResource());
 
                     if (resource.getReviews().contains(review)) {
-                        return; //We reached an review that's already in the db, so we finished fetching the latest ones.
+                        return; //We reached a review that's already in the db, so we finished fetching the latest ones.
                     }
 
                     resource.getReviews().add(review);
