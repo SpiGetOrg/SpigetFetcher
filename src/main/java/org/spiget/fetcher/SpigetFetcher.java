@@ -368,6 +368,19 @@ public class SpigetFetcher {
         }
 
         try {
+            log.log(Level.INFO, "Running latest review update");
+            updateLatestResourceReviews();
+        } catch (Throwable throwable) {
+            Sentry.captureException(throwable);
+            log.log(Level.ERROR, "Latest review update exception", throwable);
+        }
+
+        try {
+            Thread.sleep(2000);
+        } catch (Exception ignored) {
+        }
+
+        try {
             log.log(Level.INFO, "Running update request fetch");
             int maxResourceRequest = config.get("resourceRequest.max").getAsInt();
             Set<UpdateRequest> updateRequests = databaseClient.getUpdateRequests(maxResourceRequest);
