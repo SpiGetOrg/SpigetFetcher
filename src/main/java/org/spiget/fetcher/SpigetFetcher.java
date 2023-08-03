@@ -777,6 +777,7 @@ public class SpigetFetcher {
                     }
 
                     databaseClient.updateOrInsertReview(resource, review);
+                    databaseClient.updateResource(resource);
                 }
             }
         } catch (Throwable throwable) {
