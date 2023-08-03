@@ -753,7 +753,7 @@ public class SpigetFetcher {
 
         try {
             int pageCount = Paginator.parseDocumentPageCount(SpigetClient.get(SpigetClient.BASE_URL + "resources/reviews").getDocument());
-            int maxPage = Math.min(pageCount, config.get("fetch.resources.reviews.maxPage").getAsInt());
+            int maxPage = Math.min(pageCount, config.get("fetch.resources.latestReviews.maxPage").getAsInt());
             Paginator resourceReviewsPaginator = new Paginator(SpigetClient.BASE_URL + "resources/reviews?page=%s", maxPage, false);
 
             for (Document reviewDocument : resourceReviewsPaginator) {
