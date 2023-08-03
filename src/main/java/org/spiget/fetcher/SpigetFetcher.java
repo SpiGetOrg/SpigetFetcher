@@ -764,7 +764,8 @@ public class SpigetFetcher {
                     ResourceReview review = reviewItemParser.parse(reviewElement);
                     Resource resource = databaseClient.getResource(review.getResource());
 
-                    if (resource.getReviews().contains(review)) {
+                    boolean reviewExists = resource.getReviews().stream().anyMatch(r -> r.getId() == review.getId());
+                    if (reviewExists) {
                         return; //We reached a review that's already in the db, so we finished fetching the latest ones.
                     }
 
