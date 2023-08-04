@@ -28,6 +28,7 @@ import org.spiget.data.UpdateRequest;
 import org.spiget.data.author.Author;
 import org.spiget.data.author.ListedAuthor;
 import org.spiget.data.resource.ListedResource;
+import org.spiget.data.resource.Rating;
 import org.spiget.data.resource.Resource;
 import org.spiget.data.resource.ResourceReview;
 import org.spiget.data.resource.update.ResourceUpdate;
@@ -360,6 +361,19 @@ public class SpigetFetcher {
                     .build());
         } catch (Exception e) {
             Sentry.captureException(e);
+        }
+
+        try {
+            Thread.sleep(2000);
+        } catch (Exception ignored) {
+        }
+
+        try {
+            log.log(Level.INFO, "Running latest review update");
+            updateLatestResourceReviews();
+        } catch (Throwable throwable) {
+            Sentry.captureException(throwable);
+            log.log(Level.ERROR, "Latest review update exception", throwable);
         }
 
         try {
@@ -734,6 +748,53 @@ public class SpigetFetcher {
         }
     }
 
+    private void updateLatestResourceReviews() {
+        databaseClient.updateStatus("fetch.page.item.state", "reviews");
+        ResourceReviewItemParser reviewItemParser = new ResourceReviewItemParser();
+
+        try {
+            int pageCount = Paginator.parseDocumentPageCount(SpigetClient.get(SpigetClient.BASE_URL + "resources/reviews").getDocument());
+            int maxPage = Math.min(pageCount, config.get("fetch.resources.latestReviews.maxPage").getAsInt());
+            Paginator resourceReviewsPaginator = new Paginator(SpigetClient.BASE_URL + "resources/reviews?page=%s", maxPage, false);
+
+            for (Document reviewDocument : resourceReviewsPaginator) {
+                Element reviewList = reviewDocument.select("ol.reviews").first();
+                Elements reviewElements = reviewList.select("li.primaryContent.review");
+
+                for (Element reviewElement : reviewElements) {
+                    ResourceReview review = reviewItemParser.parse(reviewElement);
+                    Resource resource = databaseClient.getResource(review.getResource());
+
+                    boolean reviewExists = resource.getReviews().stream().anyMatch(r -> r.getId() == review.getId());
+                    if (reviewExists) {
+                        return; //We reached a review that's already in the db, so we finished fetching the latest ones.
+                    }
+
+                    resource.getReviews().add(review);
+                    review.setResource(review.getResource());
+
+                    float newAverage = resource.getRating().getAverage() + ((review.getRating().getAverage() - resource.getRating().getAverage()) / resource.getReviews().size());
+                    // round average to 1 decimal
+                    newAverage = Math.round(newAverage * 10) / 10f;
+                    resource.setRating(new Rating(resource.getReviews().size(), newAverage));
+
+                    Author databaseReviewAuthor = databaseClient.getAuthor(review.getAuthor().getId());
+                    if (databaseReviewAuthor == null) {// Only insert if the document doesn't exist, so we don't accidentally overwrite existing data
+                        databaseClient.insertAuthor(review.getAuthor());
+                    }
+
+                    databaseClient.updateOrInsertReview(resource, review);
+                    databaseClient.updateResource(resource);
+
+                    log.info("Updated resource #" + resource.getId() + " with new review #" + review.getId());
+                }
+            }
+        } catch (Throwable throwable) {
+            Sentry.captureException(throwable);
+            log.error("Unexpected exception while parsing resource reviews", throwable);
+        }
+    }
+
     private void updateResourceDocumentation(@NotNull Resource resource) {
         databaseClient.updateStatus("fetch.page.item.state", "documentation");
         try {
@@ -795,6 +856,4 @@ public class SpigetFetcher {
             log.warn("Download for resource #" + resource.getId() + " failed", e);
         }
     }
-
-
 }
