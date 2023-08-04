@@ -783,6 +783,8 @@ public class SpigetFetcher {
 
                     databaseClient.updateOrInsertReview(resource, review);
                     databaseClient.updateResource(resource);
+
+                    log.info("Updated resource #" + resource.getId() + " with new review #" + review.getId());
                 }
             }
         } catch (Throwable throwable) {
