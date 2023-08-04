@@ -774,6 +774,8 @@ public class SpigetFetcher {
                     review.setResource(review.getResource());
 
                     float newAverage = resource.getRating().getAverage() + ((review.getRating().getAverage() - resource.getRating().getAverage()) / resource.getReviews().size());
+                    // round average to 1 decimal
+                    newAverage = Math.round(newAverage * 10) / 10f;
                     resource.setRating(new Rating(resource.getReviews().size(), newAverage));
 
                     Author databaseReviewAuthor = databaseClient.getAuthor(review.getAuthor().getId());
