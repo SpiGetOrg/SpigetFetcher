@@ -28,6 +28,7 @@ import org.spiget.data.UpdateRequest;
 import org.spiget.data.author.Author;
 import org.spiget.data.author.ListedAuthor;
 import org.spiget.data.resource.ListedResource;
+import org.spiget.data.resource.Rating;
 import org.spiget.data.resource.Resource;
 import org.spiget.data.resource.ResourceReview;
 import org.spiget.data.resource.update.ResourceUpdate;
@@ -771,6 +772,9 @@ public class SpigetFetcher {
 
                     resource.getReviews().add(review);
                     review.setResource(review.getResource());
+
+                    float newAverage = resource.getRating().getAverage() + ((review.getRating().getAverage() - resource.getRating().getAverage()) / resource.getReviews().size());
+                    resource.setRating(new Rating(resource.getReviews().size(), newAverage));
 
                     Author databaseReviewAuthor = databaseClient.getAuthor(review.getAuthor().getId());
                     if (databaseReviewAuthor == null) {// Only insert if the document doesn't exist, so we don't accidentally overwrite existing data
