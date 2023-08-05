@@ -481,12 +481,14 @@ public class SpigetFetcher {
                 JsonArray versionFiles = new JsonArray();
                 JsonArray latestVersionFiles = new JsonArray();
                 JsonArray updateFiles = new JsonArray();
+                JsonArray reviewFiles = new JsonArray();
                 updatedResourceIds.forEach(r -> {
                     resourceFiles.add("https://api.spiget.org/v2/resources/" + r/*54321*/);
                     downloadFiles.add("https://api.spiget.org/v2/resources/" + r + "/download");
                     versionFiles.add("https://api.spiget.org/v2/resources/" + r + "/versions");
                     latestVersionFiles.add("https://api.spiget.org/v2/resources/" + r + "/versions/latest");
                     updateFiles.add("https://api.spiget.org/v2/resources/" + r + "/updates");
+                    reviewFiles.add("https://api.spiget.org/v2/resources/" + r + "/reviews");
                 });
 
                 purgeCloudflareCache(resourceFiles);
@@ -494,6 +496,7 @@ public class SpigetFetcher {
                 purgeCloudflareCache(versionFiles);
                 purgeCloudflareCache(latestVersionFiles);
                 purgeCloudflareCache(updateFiles);
+                purgeCloudflareCache(reviewFiles);
             }
         } catch (Exception e) {
             Sentry.captureException(e);
