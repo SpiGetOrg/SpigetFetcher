@@ -27,11 +27,13 @@ import org.spiget.client.json.JsonResponse;
 import org.spiget.data.UpdateRequest;
 import org.spiget.data.author.Author;
 import org.spiget.data.author.ListedAuthor;
+import org.spiget.data.category.ListedCategory;
 import org.spiget.data.resource.ListedResource;
 import org.spiget.data.resource.Rating;
 import org.spiget.data.resource.Resource;
 import org.spiget.data.resource.ResourceReview;
 import org.spiget.data.resource.update.ResourceUpdate;
+import org.spiget.data.resource.version.ListedResourceVersion;
 import org.spiget.data.resource.version.ResourceVersion;
 import org.spiget.data.webhook.event.author.NewAuthorEvent;
 import org.spiget.data.webhook.event.resource.NewResourceEvent;
@@ -422,6 +424,9 @@ public class SpigetFetcher {
                     boolean existed = resource != null;
                     if (resource == null) {
                         resource = new Resource(request.getRequestedId());
+                        resource.setVersion(new ListedResourceVersion(0));
+                        resource.setAuthor(new ListedAuthor(0));
+                        resource.setCategory(new ListedCategory(0));
                     }
                     try {
                         long oldUpdateDate = resource.getUpdateDate();
