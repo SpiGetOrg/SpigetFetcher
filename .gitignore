@@ -2,3 +2,4 @@ logs
 .idea
 *.iml
 /src/main/resources/sentry.properties
+/target/
