@@ -1,6 +1,7 @@
 package org.spiget.fetcher.test;
 
 import com.google.gson.JsonObject;
+import org.inventivetalent.metrics.Metrics;
 import org.junit.Test;
 import org.spiget.client.SpigetClient;
 import org.spiget.client.SpigetResponse;
@@ -23,6 +24,8 @@ public class RequestTest {
 		SpigetClient.userAgent = "TotallyNot5p1g3t";
 		SpigetClient.config.addProperty("request.userAgent", "TotallyNot5p1g3t");
 		SpigetClient.config.addProperty("debug.connections", false);
+		// never flushed, so no connection is made
+		SpigetClient.metrics = new Metrics("http://localhost:8086");
 	}
 
 	@Test
