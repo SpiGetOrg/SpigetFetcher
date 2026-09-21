@@ -2,6 +2,7 @@ package org.spiget.fetcher.test;
 
 import com.google.gson.JsonObject;
 import org.inventivetalent.metrics.Metrics;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.spiget.client.SpigetClient;
 import org.spiget.client.SpigetResponse;
@@ -46,6 +47,7 @@ public class RequestTest {
 	}
 
 	@Test
+	@Ignore("resource page now requires login")
 	public void premiumResourceRequestParseTest() throws IOException, InterruptedException {
 		ListedResource base = new ListedResource(33956, "StaffMode");//Would be provided by the resource list fetcher
 		base.setCategory(new ListedCategory(20, "Premium"));
